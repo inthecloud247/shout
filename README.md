@@ -1,7 +1,18 @@
 shout
 =====
 
-== The beginning
+**shout** handles the shell scripting in the Go language.
+
+The main tool of this package is the function *Run* which lets to run system
+commands under a new process. It handles pipes, environment variables, and does
+pattern expansion just as in the Bash shell.
+
+The editing of files is very important in the shell scripting to working with
+the configuration files. shout has a great number of functions related to it,
+avoiding to have to use an external command to get the same result, and with the
+advantage of that it is created automatically a backup before of editing a file.
+
+#### Why?
 
 The shell scripting gets to be no-maintainable code; its sintaxis is very
 cryptic and it's very hard to debug. In addition, these negative points increase
@@ -33,19 +44,6 @@ easy modification and locating of sources. But Go also can do the same using
 [os]: http://golang.org/pkg/os/
 [tutorial for novices]: http://go-book.appspot.com/
 [goplay]: https://github.com/kless/goplay
-
-== External commands
-
-The main tool of this package is the function *Run* which lets to run system
-commands under a new process. It handles pipes, environment variables, and does
-pattern expansion just as in the Bash shell.
-
-== Editing
-
-The editing of files is very important in the shell scripting to working with
-the configuration files. shout has a great number of functions related to it,
-avoiding to have to use an external command to get the same result, and with the
-advantage of that it is created automatically a backup before of editing a file.
 
 
 ## Installation
