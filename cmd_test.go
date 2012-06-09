@@ -29,8 +29,8 @@ var testsOk = []struct {
 
 	{"ls cmd*.go | wc -l", "2", true},
 
-	{`grep foo shout.go`, "", false},                 // no found
-	{`grep package shout.go`, "package shout", true}, // found
+	{`grep foo shout.go`, "", false},               // no found
+	{`grep package cmd.go`, "package shout", true}, // found
 }
 
 var testsError = []struct {
