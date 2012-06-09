@@ -39,11 +39,11 @@ type edit struct {
 	buf  *bufio.ReadWriter
 }
 
-type replacer struct {
+type Replacer struct {
 	search, replace string
 }
 
-type replacerAtLine struct {
+type ReplacerAtLine struct {
 	line, search, replace string
 }
 
@@ -140,10 +140,10 @@ func (e *edit) Comment(reLine []string) error {
 // CommentOut removes the comment character of lines that mach any regular expression
 // in reLine.
 func (e *edit) CommentOut(reLine []string) error {
-	allSearch := make([]replacerAtLine, len(reLine))
+	allSearch := make([]ReplacerAtLine, len(reLine))
 
 	for i, v := range reLine {
-		allSearch[i] = replacerAtLine{
+		allSearch[i] = ReplacerAtLine{
 			v,
 			"[[:space:]]*" + e.CommentChar + "[[:space:]]*",
 			"",
@@ -165,7 +165,7 @@ func (e *edit) InsertString(s string) error {
 }*/
 
 // Replace replaces all regular expressions mathed in r.
-func (e *edit) Replace(r []replacer) error {
+func (e *edit) Replace(r []Replacer) error {
 	return e.genReplace(r, -1)
 }
 
@@ -174,13 +174,13 @@ func (e *edit) Replace(r []replacer) error {
 //   n > 0: at most n matches
 //   n == 0: the result is none
 //   n < 0: all matches
-func (e *edit) ReplaceN(r []replacer, n int) error {
+func (e *edit) ReplaceN(r []Replacer, n int) error {
 	return e.genReplace(r, n)
 }
 
 // ReplaceAtLine replaces all regular expressions mathed in r, if the line is
 // matched at the first.
-func (e *edit) ReplaceAtLine(r []replacerAtLine) error {
+func (e *edit) ReplaceAtLine(r []ReplacerAtLine) error {
 	return e.genReplaceAtLine(r, -1)
 }
 
@@ -190,12 +190,12 @@ func (e *edit) ReplaceAtLine(r []replacerAtLine) error {
 //   n > 0: at most n matches
 //   n == 0: the result is none
 //   n < 0: all matches
-func (e *edit) ReplaceAtLineN(r []replacerAtLine, n int) error {
+func (e *edit) ReplaceAtLineN(r []ReplacerAtLine, n int) error {
 	return e.genReplaceAtLine(r, n)
 }
 
 // Generic Replace: replaces a number of regular expressions matched in r.
-func (e *edit) genReplace(r []replacer, n int) error {
+func (e *edit) genReplace(r []Replacer, n int) error {
 	if n == 0 {
 		return nil
 	}
@@ -240,7 +240,7 @@ func (e *edit) genReplace(r []replacer, n int) error {
 
 // Generic ReplaceAtLine: replaces a number of regular expressions matched in r,
 // if the line is matched at the first.
-func (e *edit) genReplaceAtLine(r []replacerAtLine, n int) error {
+func (e *edit) genReplaceAtLine(r []ReplacerAtLine, n int) error {
 	if n == 0 {
 		return nil
 	}
@@ -397,7 +397,7 @@ func InsertString(filename, s string) error {
 }*/
 
 // Replace replaces all regular expressions mathed in r for the file filename.
-func Replace(filename string, r []replacer) error {
+func Replace(filename string, r []Replacer) error {
 	e, err := NewEdit(filename)
 	if err != nil {
 		return err
@@ -409,7 +409,7 @@ func Replace(filename string, r []replacer) error {
 
 // ReplaceN replaces a number of regular expressions mathed in r for the file
 // filename.
-func ReplaceN(filename string, r []replacer, n int) error {
+func ReplaceN(filename string, r []Replacer, n int) error {
 	e, err := NewEdit(filename)
 	if err != nil {
 		return err
@@ -421,7 +421,7 @@ func ReplaceN(filename string, r []replacer, n int) error {
 
 // ReplaceAtLine replaces all regular expressions mathed in r for the file
 // filename, if the line is matched at the first.
-func ReplaceAtLine(filename string, r []replacerAtLine) error {
+func ReplaceAtLine(filename string, r []ReplacerAtLine) error {
 	e, err := NewEdit(filename)
 	if err != nil {
 		return err
@@ -433,7 +433,7 @@ func ReplaceAtLine(filename string, r []replacerAtLine) error {
 
 // ReplaceAtLineN replaces a number of regular expressions mathed in r for the
 // file filename, if the line is matched at the first.
-func ReplaceAtLineN(filename string, r []replacerAtLine, n int) error {
+func ReplaceAtLineN(filename string, r []ReplacerAtLine, n int) error {
 	e, err := NewEdit(filename)
 	if err != nil {
 		return err

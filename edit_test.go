@@ -81,7 +81,7 @@ func TestEdit(t *testing.T) {
 	}*/
 
 	// Replace
-	repl := []replacer{
+	repl := []Replacer{
 		{"dolor", "DOL_"},
 		{"labor", "LABOR_"},
 	}
@@ -95,7 +95,7 @@ func TestEdit(t *testing.T) {
 		}
 	}
 
-	repl = []replacer{
+	repl = []Replacer{
 		{"DOL_", "dOlOr"},
 		{"LABOR_", "lAbOr"},
 	}
@@ -112,7 +112,7 @@ func TestEdit(t *testing.T) {
 	}
 
 	// ReplaceAtLine
-	replAt := []replacerAtLine{
+	replAt := []ReplacerAtLine{
 		{"LABOR", "o", "OO"},
 	}
 	resul = "2"
@@ -125,7 +125,7 @@ func TestEdit(t *testing.T) {
 		}
 	}
 
-	replAt = []replacerAtLine{
+	replAt = []ReplacerAtLine{
 		{"heard", "a", "AA"},
 	}
 	resul = "1"
