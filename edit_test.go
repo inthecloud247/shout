@@ -1,0 +1,162 @@
+// Copyright 2012  The "shout" Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package shout
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+var (
+	TEMP_FILE   = filepath.Join(os.TempDir(), "test-edit.txt")
+	TEMP_BACKUP = TEMP_FILE + "+1~"
+)
+
+func TestCreate(t *testing.T) {
+	if err := CreateString(TEMP_FILE,
+`Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor 
+incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis 
+nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu 
+fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in 
+culpa qui officia deserunt mollit anim id est laborum.
+`); err != nil {
+		t.Fatal(err)
+	}
+
+	out, _, err := Runf("wc -l %s", TEMP_FILE)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out[0] != '6' {
+		t.Fatalf("got %q lines, want 6", out[0])
+	}
+}
+
+func TestEdit(t *testing.T) {
+	line := "I've heard that the night is all magic."
+
+	e, err := NewEdit(TEMP_FILE)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(TEMP_FILE)
+	defer e.Close()
+
+	// The backup should be created.
+	if _, err = os.Stat(TEMP_BACKUP); err != nil {
+		t.Error(err)
+	}
+	defer os.Remove(TEMP_BACKUP)
+
+	// Append
+	if err = e.AppendString("\n" + line + "\n"); err != nil {
+		t.Error(err)
+	} else {
+		if out, _, _ := Run("tail -n1 " + TEMP_FILE); out != line {
+			t.Errorf("Append => got %q, want %q", out, line)
+		}
+	}
+
+	/*// Insert
+	if err = e.InsertString(line); err != nil {
+		t.Error(err)
+	} else {
+		if out, _, _ := Run("head -n1 " + TEMP_FILE); out != line {
+			t.Errorf("Insert => got %q, want %q", out, line)
+		}
+	}*/
+
+	// Replace
+	repl := []replacer{
+		{"dolor", "DOL_"},
+		{"labor", "LABOR_"},
+	}
+	resul := "3"
+
+	if err = e.Replace(repl); err != nil {
+		t.Error(err)
+	} else {
+		if out, _, _ := Runf("grep -c %s %s", repl[1].replace, TEMP_FILE); out != resul {
+			t.Errorf("Replace (%s) => got %v, want %v", repl[1].replace, out, resul)
+		}
+	}
+
+	repl = []replacer{
+		{"DOL_", "dOlOr"},
+		{"LABOR_", "lAbOr"},
+	}
+	resul = "1"
+
+	if err = e.ReplaceN(repl, 1); err != nil {
+		t.Error(err)
+	} else {
+		for i := 0; i <= 1; i++ {
+			if out, _, _ := Runf("grep -c %s %s", repl[i].replace, TEMP_FILE); out != resul {
+				t.Errorf("Replace (%s) => got %v, want %v", repl[i].replace, out, resul)
+			}
+		}
+	}
+
+	// ReplaceAtLine
+	replAt := []replacerAtLine{
+		{"LABOR", "o", "OO"},
+	}
+	resul = "2"
+
+	if err = e.ReplaceAtLine(replAt); err != nil {
+		t.Error(err)
+	} else {
+		if out, _, _ := Run("grep -c OO " + TEMP_FILE); out != resul {
+			t.Errorf("ReplaceAtLine => got %v, want %v", out, resul)
+		}
+	}
+
+	replAt = []replacerAtLine{
+		{"heard", "a", "AA"},
+	}
+	resul = "1"
+
+	if err = e.ReplaceAtLineN(replAt, 2); err != nil {
+		t.Error(err)
+	} else {
+		if out, _, _ := Runf("tail -n1 %s | grep -c A", TEMP_FILE); out != resul {
+			t.Errorf("ReplaceAtLineN => got %v, want %v", out, resul)
+		}
+	}
+
+	// Comment
+	resul = "2"
+
+	if err = e.Comment([]string{"night", "quis"}); err != nil {
+		t.Error(err)
+	} else {
+		if out, _, _ := Runf("grep -c %s %s", e.CommentChar, TEMP_FILE); out != resul {
+			t.Errorf("Comment => got %v, want %v", out, resul)
+		}
+	}
+
+	// CommentOut
+	resul = "0"
+
+	if err = e.CommentOut([]string{"night", "quis"}); err != nil {
+		t.Error(err)
+	} else {
+		if out, _, _ := Runf("grep -c %s %s", e.CommentChar, TEMP_FILE); out != resul {
+			t.Errorf("CommentOut => got %v, want %v", out, resul)
+		}
+	}
+}

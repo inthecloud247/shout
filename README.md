@@ -34,16 +34,17 @@ the main one to use in system scripts.
 Whatever administrator without great knowledge about programming can built basic
 scripts fastly with the help of this [tutorial for novices][].
 
-The advantage of a shell script, versus a compiled program, is that allows an
-easy modification and locating of sources. But Go also can do the same using
-[goplay][].
-
 [Go]: http://golang.org/
 [sintaxis]: http://golang.org/ref/spec
 [standard library]: http://golang.org/pkg/
 [os]: http://golang.org/pkg/os/
 [tutorial for novices]: http://go-book.appspot.com/
-[goplay]: https://github.com/kless/goplay
+
+#### Interpreted vs Compiled
+
+The advantage of a shell script versus a compiled program, is that it allows an
+easy modification and locating of sources.  
+But Go also can do the same using [goplay][https://github.com/kless/goplay].
 
 
 ## Installation

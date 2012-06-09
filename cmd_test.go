@@ -50,12 +50,6 @@ var testsError = []struct {
 }
 
 func TestRun(t *testing.T) {
-	//BOOT = true
-	//DEBUG = true
-
-	New()
-	defer Close()
-
 	for _, v := range testsOk {
 		out, ok, _ := Run(v.cmd)
 

@@ -67,13 +67,19 @@ func NewEdit(name string) (*edit, error) {
 
 // Append writes len(b) bytes at the end of the File. It returns an error, if any.
 func (e *edit) Append(b []byte) error {
-	return e.write(b, os.SEEK_END)
+	_, err := e.file.Seek(0, os.SEEK_END)
+	if err != nil {
+		return err
+	}
+
+	_, err = e.file.Write(b)
+	return err
 }
 
 // AppendString is like Append, but writes the contents of string s rather than
 // an array of bytes.
 func (e *edit) AppendString(s string) error {
-	return e.write([]byte(s), os.SEEK_END)
+	return e.Append([]byte(s))
 }
 
 // Close closes the file.
@@ -85,18 +91,22 @@ func (e *edit) Close() error {
 // in reLine.
 func (e *edit) Comment(reLine []string) error {
 	allReSearch := make([]*regexp.Regexp, len(reLine))
-	char := []byte(e.CommentChar + " ")
 
-	for _, v := range reLine {
+	for i, v := range reLine {
 		if re, err := regexp.Compile(v); err != nil {
 			return err
 		} else {
-			allReSearch = append(allReSearch, re)
+			allReSearch[i] = re
 		}
 	}
 
-	newContent := new(bytes.Buffer)
+	if _, err := e.file.Seek(0, os.SEEK_SET); err != nil {
+		return err
+	}
+
+	char := []byte(e.CommentChar + " ")
 	isNew := false
+	buf := new(bytes.Buffer)
 
 	// Check every line.
 	for {
@@ -112,15 +122,17 @@ func (e *edit) Comment(reLine []string) error {
 				if !isNew {
 					isNew = true
 				}
+				break
 			}
-			if _, err = newContent.Write(line); err != nil {
-				return err
-			}
+		}
+
+		if _, err = buf.Write(line); err != nil {
+			return err
 		}
 	}
 
 	if isNew {
-		return e.rewrite(newContent.Bytes())
+		return e.rewrite(buf.Bytes())
 	}
 	return nil
 }
@@ -141,16 +153,16 @@ func (e *edit) CommentOut(reLine []string) error {
 	return e.ReplaceAtLineN(allSearch, 1)
 }
 
-// Insert writes len(b) bytes at the start of the File. It returns an error, if any.
+/*// Insert writes len(b) bytes at the start of the File. It returns an error, if any.
 func (e *edit) Insert(b []byte) error {
-	return e.write(b, os.SEEK_SET)
+	return e.rewrite(b)
 }
 
 // InsertString is like Insert, but writes the contents of string s rather than
 // an array of bytes.
 func (e *edit) InsertString(s string) error {
-	return e.write([]byte(s), os.SEEK_SET)
-}
+	return e.rewrite([]byte(s))
+}*/
 
 // Replace replaces all regular expressions mathed in r.
 func (e *edit) Replace(r []replacer) error {
@@ -187,13 +199,15 @@ func (e *edit) genReplace(r []replacer, n int) error {
 	if n == 0 {
 		return nil
 	}
+	if _, err := e.file.Seek(0, os.SEEK_SET); err != nil {
+		return err
+	}
 
 	content, err := ioutil.ReadAll(e.buf)
 	if err != nil {
 		return err
 	}
 
-	var lastContent []byte
 	isNew := false
 
 	for _, v := range r {
@@ -202,23 +216,20 @@ func (e *edit) genReplace(r []replacer, n int) error {
 			return err
 		}
 
-		if n < 0 {
-			lastContent = reSearch.ReplaceAllLiteral(content, []byte(v.replace))
-		} else {
-			repl := []byte(v.replace)
-			lastContent = content
+		i := n
+		repl := []byte(v.replace)
 
-			for _, idx := range reSearch.FindAllSubmatchIndex(content, n) {
-				lastContent = append(lastContent[:idx[0]], append(repl, lastContent[idx[1]:]...)...)
-			}
-		}
-
-		if !bytes.Equal(content, lastContent) {
-			content = lastContent
+		content = reSearch.ReplaceAllFunc(content, func(s []byte) []byte {
 			if !isNew {
 				isNew = true
 			}
-		}
+
+			if i != 0 {
+				i--
+				return repl
+			}
+			return s
+		})
 	}
 
 	if isNew {
@@ -233,29 +244,32 @@ func (e *edit) genReplaceAtLine(r []replacerAtLine, n int) error {
 	if n == 0 {
 		return nil
 	}
+	if _, err := e.file.Seek(0, os.SEEK_SET); err != nil {
+		return err
+	}
 
 	// == Cache the regular expressions
 	allReLine := make([]*regexp.Regexp, len(r))
 	allReSearch := make([]*regexp.Regexp, len(r))
 	allRepl := make([][]byte, len(r))
 
-	for _, v := range r {
+	for i, v := range r {
 		if reLine, err := regexp.Compile(v.line); err != nil {
 			return err
 		} else {
-			allReLine = append(allReLine, reLine)
+			allReLine[i] = reLine
 		}
 
 		if reSearch, err := regexp.Compile(v.search); err != nil {
 			return err
 		} else {
-			allReSearch = append(allReSearch, reSearch)
+			allReSearch[i] = reSearch
 		}
 
-		allRepl = append(allRepl, []byte(v.replace))
+		allRepl[i] = []byte(v.replace)
 	}
 
-	newContent := new(bytes.Buffer)
+	buf := new(bytes.Buffer)
 	isNew := false
 
 	// Replace every line, if it maches
@@ -264,31 +278,31 @@ func (e *edit) genReplaceAtLine(r []replacerAtLine, n int) error {
 		if err == io.EOF {
 			break
 		}
-		newLine := line
 
 		for i, _ := range r {
 			if allReLine[i].Match(line) {
-				if n < 0 {
-					newLine = allReSearch[i].ReplaceAllLiteral(newLine, allRepl[i])
-				} else {
-					for _, idx := range allReSearch[i].FindAllSubmatchIndex(newLine, n) {
-						newLine = append(newLine[:idx[0]],
-							append(allRepl[i], newLine[idx[1]:]...)...)
-					}
-				}
-			}
+				j := n
 
-			if _, err = newContent.Write(newLine); err != nil {
-				return err
+				line = allReSearch[i].ReplaceAllFunc(line, func(s []byte) []byte {
+					if !isNew {
+						isNew = true
+					}
+
+					if j != 0 {
+						j--
+						return allRepl[i]
+					}
+					return s
+				})
 			}
-			if !isNew && !bytes.Equal(line, newLine) {
-				isNew = true
-			}
+		}
+		if _, err = buf.Write(line); err != nil {
+			return err
 		}
 	}
 
 	if isNew {
-		return e.rewrite(newContent.Bytes())
+		return e.rewrite(buf.Bytes())
 	}
 	return nil
 }
@@ -305,18 +319,7 @@ func (e *edit) rewrite(b []byte) error {
 	if err = e.file.Truncate(int64(n)); err != nil {
 		return err
 	}
-
-	return e.file.Sync()
-}
-
-func (e *edit) write(b []byte, seek int) error {
-	_, err := e.file.Seek(0, seek)
-	if err != nil {
-		return err
-	}
-
-	_, err = e.file.Write(b)
-	return err
+	return nil // e.file.Sync()
 }
 
 // * * *
@@ -375,7 +378,7 @@ func CommentOutM(filename string, reLine []string) error {
 	return e.CommentOut(reLine)
 }
 
-// Insert writes len(b) bytes at the start of the file filename. It returns an
+/*// Insert writes len(b) bytes at the start of the file filename. It returns an
 // error, if any. The file is backed up.
 func Insert(filename string, b []byte) error {
 	e, err := NewEdit(filename)
@@ -391,30 +394,7 @@ func Insert(filename string, b []byte) error {
 // an array of bytes.
 func InsertString(filename, s string) error {
 	return Insert(filename, []byte(s))
-}
-
-// Overwrite truncates the file filename to zero and writes len(b) bytes. It
-// returns an error, if any.
-func Overwrite(filename string, b []byte) error {
-	if err := Backup(filename); err != nil {
-		return err
-	}
-
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = f.Write(b)
-	return err
-}
-
-// OverwriteString is like Overwrite, but writes the contents of string s rather
-// than an array of bytes.
-func OverwriteString(filename, s string) error {
-	return Overwrite(filename, []byte(s))
-}
+}*/
 
 // Replace replaces all regular expressions mathed in r for the file filename.
 func Replace(filename string, r []replacer) error {

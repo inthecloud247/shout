@@ -12,6 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package shout handles the shell scripting.
+//
+// The main tool of this package is the function *Run* which lets to run system
+// commands under a new process. It handles pipes, environment variables, and does
+// pattern expansion just as in the Bash shell.
+//
+// The editing of files is very important in the shell scripting to working with
+// the configuration files. shout has a great number of functions related to it,
+// avoiding to have to use an external command to get the same result, and with the
+// advantage of that it is created automatically a backup before of editing a file.
+//
 package shout
 
 import (
@@ -55,9 +66,3 @@ func New() {
 func Close() error {
 	return logf.Close()
 }
-
-/*func checkErr(e error) {
-	if err != nil {
-		log.Fatal(e)
-	}
-}*/

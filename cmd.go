@@ -247,6 +247,12 @@ func Run(command string) (output string, ok bool, err error) {
 	return strings.Trim(stdout.String(), "\n"), ok, nil
 }
 
+// Runf is like Run, but formats its arguments according to the format,
+// analogous to Printf().
+func Runf(format string, args ...interface{}) (string, bool, error) {
+	return Run(fmt.Sprintf(format, args...))
+}
+
 // Sudo calls to command sudo.
 // If anything command needs to use sudo, then could be used this function at
 // the beginning so there is not to wait until that it been requested later.
