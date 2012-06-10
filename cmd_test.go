@@ -29,6 +29,10 @@ var testsOk = []struct {
 
 	{"ls cmd*.go | wc -l", "2", true},
 
+	{`sh -c 'echo 123'`, "123", true}, // argument with simple quotes
+	{`sh -c "echo 123"`, "123", true}, // and with double quotes
+	{`find -name 'cmd*.go'`, "./cmd_test.go\n./cmd.go", true},
+
 	{`grep foo shout.go`, "", false},               // no found
 	{`grep package cmd.go`, "package shout", true}, // found
 }

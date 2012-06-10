@@ -177,6 +177,45 @@ func Run(command string) (output string, ok bool, err error) {
 			}
 		}
 
+		// == Handle arguments with quotes
+		hasQuote := false
+		needUpdate := false
+		tmpFields := []string{}
+
+		for _, v := range fields {
+			if !hasQuote && (strings.HasPrefix(v, "'") || strings.HasPrefix(v, "\"")) {
+				if !needUpdate {
+					needUpdate = true
+				}
+
+				v = v[1:] // skip quote
+
+				if strings.HasSuffix(v, "'") {
+					v = v[:len(v)-1] // remove quote
+				} else {
+					hasQuote = true
+				}
+
+				tmpFields = append(tmpFields, v)
+				continue
+			}
+
+			if hasQuote {
+				if strings.HasSuffix(v, "'") || strings.HasSuffix(v, "\"") {
+					v = v[:len(v)-1] // remove quote
+					hasQuote = false
+				}
+				tmpFields[len(tmpFields)-1] += " " + v
+				continue
+			}
+
+			tmpFields = append(tmpFields, v)
+		}
+
+		if needUpdate {
+			fields = tmpFields
+		}
+
 		// == Create command
 		c := &exec.Cmd{
 			Path: cmdPath,
