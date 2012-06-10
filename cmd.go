@@ -183,14 +183,16 @@ func Run(command string) (output string, ok bool, err error) {
 		tmpFields := []string{}
 
 		for _, v := range fields {
-			if !hasQuote && (strings.HasPrefix(v, "'") || strings.HasPrefix(v, "\"")) {
+			lastChar := v[len(v)-1]
+
+			if !hasQuote && (v[0] == '\'' || v[0] == '"') {
 				if !needUpdate {
 					needUpdate = true
 				}
 
 				v = v[1:] // skip quote
 
-				if strings.HasSuffix(v, "'") {
+				if lastChar == '\'' || lastChar == '"' {
 					v = v[:len(v)-1] // remove quote
 				} else {
 					hasQuote = true
@@ -201,7 +203,7 @@ func Run(command string) (output string, ok bool, err error) {
 			}
 
 			if hasQuote {
-				if strings.HasSuffix(v, "'") || strings.HasSuffix(v, "\"") {
+				if lastChar == '\'' || lastChar == '"' {
 					v = v[:len(v)-1] // remove quote
 					hasQuote = false
 				}
