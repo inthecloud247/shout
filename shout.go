@@ -34,10 +34,15 @@ import (
 var (
 	BOOT  bool // does the script is being run during boot?
 	DEBUG bool
+	_HOME string // to expand symbol "~"
 
 	logf *os.File
 	log_ *log.Logger
 )
+
+func init() {
+	_HOME = os.Getenv("HOME")
+}
 
 // Set the environment variable PATH.
 func New() {

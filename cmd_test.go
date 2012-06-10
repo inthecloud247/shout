@@ -21,6 +21,14 @@ import (
 
 var testsOk = []struct {
 	cmd string
+	ok  bool
+}{
+	// expansion of "~"
+	{"ls ~/", true},
+}
+
+var testsOutput = []struct {
+	cmd string
 	out string
 	ok  bool
 }{
@@ -57,6 +65,18 @@ var testsError = []struct {
 
 func TestRun(t *testing.T) {
 	for _, v := range testsOk {
+		out, ok, _ := Run(v.cmd)
+
+		if ok != v.ok {
+			t.Errorf("`%s` => ok got %t, want %t\n", v.cmd, ok, v.ok)
+		}
+
+		if out == "" {
+			t.Errorf("`%s` => output is empty", v.cmd)
+		}
+	}
+
+	for _, v := range testsOutput {
 		out, ok, _ := Run(v.cmd)
 
 		if out != v.out {

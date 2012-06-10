@@ -61,7 +61,8 @@ func (e runError) Error() string {
 // * * *
 
 // Run executes external commands with access to shell features such as filename
-// wildcards, shell pipes and environment variables.
+// wildcards, shell pipes, environment variables, and expansion of the shortcut
+// character "~" to home directory.
 //
 // This function avoids to have execute commands through a shell since an
 // unsanitized input from an untrusted source makes a program vulnerable to
@@ -149,7 +150,7 @@ func Run(command string) (output string, ok bool, err error) {
 			}
 		}
 
-		// == Expand the shell file name pattern in arguments, if any
+		// == Expansion of arguments
 		expand := make(map[int][]string, len(fields))
 
 		for j := indexArgs; j < len(fields); j++ {
@@ -158,6 +159,12 @@ func Run(command string) (output string, ok bool, err error) {
 				continue
 			}
 
+			// Shortcut character "~"
+			if fields[j] == "~" || strings.HasPrefix(fields[j], "~/") {
+				fields[j] = strings.Replace(fields[j], "~", _HOME, 1)
+			}
+
+			// File name wildcards
 			names, e := filepath.Glob(fields[j])
 			if e != nil {
 				err = runError{command, "", "ERR", e}
@@ -182,7 +189,8 @@ func Run(command string) (output string, ok bool, err error) {
 		needUpdate := false
 		tmpFields := []string{}
 
-		for _, v := range fields {
+		for j := indexArgs; j < len(fields); j++ {
+			v := fields[j]
 			lastChar := v[len(v)-1]
 
 			if !hasQuote && (v[0] == '\'' || v[0] == '"') {
@@ -215,7 +223,7 @@ func Run(command string) (output string, ok bool, err error) {
 		}
 
 		if needUpdate {
-			fields = tmpFields
+			fields = append(fields[:indexArgs], tmpFields...)
 		}
 
 		// == Create command
