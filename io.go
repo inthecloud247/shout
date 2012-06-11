@@ -21,8 +21,7 @@ import (
 	"path/filepath"
 )
 
-// Suffix pattern added to backup file name.
-const _BACKUP_SUFFIX = "+[1-9]~"
+const _BACKUP_SUFFIX = "+[1-9]~" // suffix pattern added to backup filename
 
 // Backup creates the backup of a file.
 //

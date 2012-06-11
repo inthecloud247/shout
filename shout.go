@@ -26,48 +26,24 @@
 package shout
 
 import (
-	"log"
-	//"log/syslog"
 	"os"
+
+	"github.com/kless/shout/boot"
 )
 
 var (
-	BOOT  bool // does the script is being run during boot?
-	DEBUG bool
+	_ENV  []string
 	_HOME string // to expand symbol "~"
-
-	logf *os.File
-	log_ *log.Logger
+	BOOT  bool   // does the script is being run during boot?
+	DEBUG bool
 )
 
 func init() {
 	_HOME = os.Getenv("HOME")
-}
-
-// Set the environment variable PATH.
-func New() {
-	var err error
-	logFilename := "/tmp/boot.log"
 
 	if BOOT {
-		if path := os.Getenv("PATH"); path == "" {
-			if err := os.Setenv("PATH", _PATH); err != nil {
-				log.Print(err)
-			}
-		}
-
-		logFilename = "/var/log/boot_.log"
+		_ENV = []string{"PATH=" + boot.PATH}
+	} else {
+		_ENV = os.Environ()
 	}
-
-	logf, err = os.OpenFile(logFilename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log_ = log.New(os.Stderr, "", log.Lshortfile)
-}
-
-// Close closes the log file.
-func Close() error {
-	return logf.Close()
 }
