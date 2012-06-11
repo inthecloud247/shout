@@ -96,7 +96,7 @@ func Copy(source, dest string) (int64, error) {
 }
 
 // Create creates a new file with b bytes.
-func Create(filename string, b []byte) error {
+func Create(b []byte, filename string) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -109,13 +109,13 @@ func Create(filename string, b []byte) error {
 
 // CreateString is like Create, but writes the contents of string s rather than
 // an array of bytes.
-func CreateString(filename, s string) error {
-	return Create(filename, []byte(s))
+func CreateString(s, filename string) error {
+	return Create([]byte(s), filename)
 }
 
 // Overwrite truncates the file filename to zero and writes len(b) bytes. It
 // returns an error, if any.
-func Overwrite(filename string, b []byte) error {
+func Overwrite(b []byte, filename string) error {
 	if err := Backup(filename); err != nil {
 		return err
 	}
@@ -132,6 +132,6 @@ func Overwrite(filename string, b []byte) error {
 
 // OverwriteString is like Overwrite, but writes the contents of string s rather
 // than an array of bytes.
-func OverwriteString(filename, s string) error {
-	return Overwrite(filename, []byte(s))
+func OverwriteString(s, filename string) error {
+	return Overwrite([]byte(s), filename)
 }

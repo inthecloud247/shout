@@ -14,8 +14,8 @@
 
 // Package shout handles the shell scripting.
 //
-// The main tool of this package is the function *Run* which lets to run system
-// commands under a new process. It handles pipes, environment variables, and does
+// The main function of this package is *Run* which lets to run system commands
+// under a new process. It handles pipes, environment variables, and does
 // pattern expansion just as in the Bash shell.
 //
 package shout

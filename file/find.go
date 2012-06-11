@@ -16,18 +16,42 @@ package file
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 )
 
+// Find returns whether the file filename contains the byte slice b. The
+// return value is a boolean.
+func Find(b []byte, filename string) (bool, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return false, fmt.Errorf("Find: %s", err)
+	}
+	defer f.Close()
+
+	buf := bufio.NewReader(f)
+
+	for {
+		line, err := buf.ReadBytes('\n')
+		if err == io.EOF {
+			break
+		}
+		if bytes.Contains(line, b) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // FindString returns whether the file filename contains the string s. The
 // return value is a boolean.
 func FindString(s, filename string) (bool, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return false, fmt.Errorf("grep: %s", err)
+		return false, fmt.Errorf("FindString: %s", err)
 	}
 	defer f.Close()
 
