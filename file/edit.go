@@ -12,7 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package shout
+// Package file handles files.
+//
+// The editing of files is very important in the shell scripting to working with
+// the configuration files. shout has a great number of functions related to it,
+// avoiding to have to use an external command to get the same result, and with the
+// advantage of that it is created automatically a backup before of editing a file.
+//
+package file
 
 import (
 	"bufio"

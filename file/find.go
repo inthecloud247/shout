@@ -12,34 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package shout
+package file
 
 import (
-	"path/filepath"
-	"testing"
+	"bufio"
+	"fmt"
+	"io"
+	"os"
+	"strings"
 )
 
-func TestBackupSuffix(t *testing.T) {
-	okFilenames := []string{"foo+1~", "foo+2~", "foo+5~", "foo+8~", "foo+9~"}
-	badFilenames := []string{"foo+0~", "foo+10~", "foo+11~", "foo+22~"}
+// FindString returns whether the file filename contains the string s. The
+// return value is a boolean.
+func FindString(s, filename string) (bool, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return false, fmt.Errorf("grep: %s", err)
+	}
+	defer f.Close()
 
-	for _, v := range okFilenames {
-		ok, err := filepath.Match("foo"+_BACKUP_SUFFIX, v)
-		if err != nil {
-			t.Fatal(err)
+	buf := bufio.NewReader(f)
+
+	for {
+		line, err := buf.ReadString('\n')
+		if err == io.EOF {
+			break
 		}
-		if !ok {
-			t.Errorf("%q should be matched", v)
+		if strings.Contains(line, s) {
+			return true, nil
 		}
 	}
-
-	for _, v := range badFilenames {
-		ok, err := filepath.Match("foo"+_BACKUP_SUFFIX, v)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if ok {
-			t.Errorf("%q should not be matched", v)
-		}
-	}
+	return false, nil
 }

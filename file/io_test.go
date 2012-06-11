@@ -12,33 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package shout handles the shell scripting.
-//
-// The main tool of this package is the function *Run* which lets to run system
-// commands under a new process. It handles pipes, environment variables, and does
-// pattern expansion just as in the Bash shell.
-//
-package shout
+package file
 
 import (
-	"os"
-
-	"github.com/kless/shout/boot"
+	"path/filepath"
+	"testing"
 )
 
-var (
-	_ENV  []string
-	_HOME string // to expand symbol "~"
-	BOOT  bool   // does the script is being run during boot?
-	DEBUG bool
-)
+func TestBackupSuffix(t *testing.T) {
+	okFilenames := []string{"foo+1~", "foo+2~", "foo+5~", "foo+8~", "foo+9~"}
+	badFilenames := []string{"foo+0~", "foo+10~", "foo+11~", "foo+22~"}
 
-func init() {
-	_HOME = os.Getenv("HOME")
+	for _, v := range okFilenames {
+		ok, err := filepath.Match("foo"+_BACKUP_SUFFIX, v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !ok {
+			t.Errorf("%q should be matched", v)
+		}
+	}
 
-	if BOOT {
-		_ENV = []string{"PATH=" + boot.PATH}
-	} else {
-		_ENV = os.Environ()
+	for _, v := range badFilenames {
+		ok, err := filepath.Match("foo"+_BACKUP_SUFFIX, v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if ok {
+			t.Errorf("%q should not be matched", v)
+		}
 	}
 }
