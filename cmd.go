@@ -66,7 +66,7 @@ func (e runError) Error() string {
 //
 // The most of commands return a text in output or an error if any. ok is used
 // in commands like *grep*, *find*, or *cmp* to indicate if the serach is matched.
-func Run(command string) (output string, ok bool, err error) {
+func Run(command string) (output []byte, ok bool, err error) {
 	var (
 		cmds           []*exec.Cmd
 		outPipes       []io.ReadCloser
@@ -281,12 +281,12 @@ func Run(command string) (output string, ok bool, err error) {
 		}
 	}
 
-	return strings.Trim(stdout.String(), "\n"), ok, nil
+	return stdout.Bytes(), ok, nil
 }
 
 // Runf is like Run, but formats its arguments according to the format,
 // analogous to Printf().
-func Runf(format string, args ...interface{}) (string, bool, error) {
+func Runf(format string, args ...interface{}) ([]byte, bool, error) {
 	return Run(fmt.Sprintf(format, args...))
 }
 

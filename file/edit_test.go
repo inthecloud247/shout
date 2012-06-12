@@ -49,13 +49,13 @@ culpa qui officia deserunt mollit anim id est laborum.
 }
 
 func TestEdit(t *testing.T) {
-	line := "I've heard that the night is all magic."
+	line := "I've heard that the night is all magic.\n"
 
 	e, err := NewEdit(TEMP_FILE)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(TEMP_FILE)
+	// defer os.Remove(TEMP_FILE)
 	defer e.Close()
 
 	// The backup should be created.
@@ -65,10 +65,10 @@ func TestEdit(t *testing.T) {
 	defer os.Remove(TEMP_BACKUP)
 
 	// Append
-	if err = e.AppendString("\n" + line + "\n"); err != nil {
+	if err = e.AppendString("\n" + line); err != nil {
 		t.Error(err)
 	} else {
-		if out, _, _ := Run("tail -n1 " + TEMP_FILE); out != line {
+		if out, _, _ := Run("tail -n1 " + TEMP_FILE); string(out) != line {
 			t.Errorf("Append => got %q, want %q", out, line)
 		}
 	}
@@ -87,12 +87,12 @@ func TestEdit(t *testing.T) {
 		{"dolor", "DOL_"},
 		{"labor", "LABOR_"},
 	}
-	resul := "3"
+	resul := "3\n"
 
 	if err = e.Replace(repl); err != nil {
 		t.Error(err)
 	} else {
-		if out, _, _ := Runf("grep -c %s %s", repl[1].replace, TEMP_FILE); out != resul {
+		if out, _, _ := Runf("grep -c %s %s", repl[1].replace, TEMP_FILE); string(out) != resul {
 			t.Errorf("Replace (%s) => got %v, want %v", repl[1].replace, out, resul)
 		}
 	}
@@ -101,13 +101,13 @@ func TestEdit(t *testing.T) {
 		{"DOL_", "dOlOr"},
 		{"LABOR_", "lAbOr"},
 	}
-	resul = "1"
+	resul = "1\n"
 
 	if err = e.ReplaceN(repl, 1); err != nil {
 		t.Error(err)
 	} else {
 		for i := 0; i <= 1; i++ {
-			if out, _, _ := Runf("grep -c %s %s", repl[i].replace, TEMP_FILE); out != resul {
+			if out, _, _ := Runf("grep -c %s %s", repl[i].replace, TEMP_FILE); string(out) != resul {
 				t.Errorf("Replace (%s) => got %v, want %v", repl[i].replace, out, resul)
 			}
 		}
@@ -117,12 +117,12 @@ func TestEdit(t *testing.T) {
 	replAt := []ReplacerAtLine{
 		{"LABOR", "o", "OO"},
 	}
-	resul = "2"
+	resul = "2\n"
 
 	if err = e.ReplaceAtLine(replAt); err != nil {
 		t.Error(err)
 	} else {
-		if out, _, _ := Run("grep -c OO " + TEMP_FILE); out != resul {
+		if out, _, _ := Run("grep -c OO " + TEMP_FILE); string(out) != resul {
 			t.Errorf("ReplaceAtLine => got %v, want %v", out, resul)
 		}
 	}
@@ -130,34 +130,34 @@ func TestEdit(t *testing.T) {
 	replAt = []ReplacerAtLine{
 		{"heard", "a", "AA"},
 	}
-	resul = "1"
+	resul = "1\n"
 
 	if err = e.ReplaceAtLineN(replAt, 2); err != nil {
 		t.Error(err)
 	} else {
-		if out, _, _ := Runf("tail -n1 %s | grep -c A", TEMP_FILE); out != resul {
+		if out, _, _ := Runf("tail -n1 %s | grep -c A", TEMP_FILE); string(out) != resul {
 			t.Errorf("ReplaceAtLineN => got %v, want %v", out, resul)
 		}
 	}
 
 	// Comment
-	resul = "2"
+	resul = "2\n"
 
 	if err = e.Comment([]string{"night", "quis"}); err != nil {
 		t.Error(err)
 	} else {
-		if out, _, _ := Runf("grep -c %s %s", e.CommentChar, TEMP_FILE); out != resul {
+		if out, _, _ := Runf("grep -c %s %s", e.CommentChar, TEMP_FILE); string(out) != resul {
 			t.Errorf("Comment => got %v, want %v", out, resul)
 		}
 	}
 
 	// CommentOut
-	resul = "0"
+	resul = "0\n"
 
 	if err = e.CommentOut([]string{"night", "quis"}); err != nil {
 		t.Error(err)
 	} else {
-		if out, _, _ := Runf("grep -c %s %s", e.CommentChar, TEMP_FILE); out != resul {
+		if out, _, _ := Runf("grep -c %s %s", e.CommentChar, TEMP_FILE); string(out) != resul {
 			t.Errorf("CommentOut => got %v, want %v", out, resul)
 		}
 	}

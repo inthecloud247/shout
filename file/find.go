@@ -23,12 +23,12 @@ import (
 	"strings"
 )
 
-// Find returns whether the file filename contains the byte slice b. The
+// Contain returns whether the file filename contains the byte slice b. The
 // return value is a boolean.
-func Find(b []byte, filename string) (bool, error) {
+func Contain(b []byte, filename string) (bool, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return false, fmt.Errorf("Find: %s", err)
+		return false, fmt.Errorf("Contain: %s", err)
 	}
 	defer f.Close()
 
@@ -46,12 +46,12 @@ func Find(b []byte, filename string) (bool, error) {
 	return false, nil
 }
 
-// FindString returns whether the file filename contains the string s. The
+// ContainString returns whether the file filename contains the string s. The
 // return value is a boolean.
-func FindString(s, filename string) (bool, error) {
+func ContainString(s, filename string) (bool, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return false, fmt.Errorf("FindString: %s", err)
+		return false, fmt.Errorf("ContainString: %s", err)
 	}
 	defer f.Close()
 

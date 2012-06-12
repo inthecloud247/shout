@@ -12,14 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package boot handles boot scripts.
-//
-package boot
+// +build linux
+
+package shout
 
 import (
 	"fmt"
-	"log"
-	//"log/syslog"
 	"os"
 	"os/exec"
 	"syscall"
@@ -33,12 +31,7 @@ const (
 	PATH      = "/sbin:/bin:/usr/sbin:/usr/bin"
 )
 
-var (
-	USE_CMD_WRITE bool
-
-	logf *os.File
-	log_ *log.Logger
-)
+var USE_CMD_WRITE bool
 
 func init() {
 	// Check if there is an the external command to write.
@@ -53,31 +46,6 @@ func init() {
 //	if _, ok, _ := shout.Run(CMD_WRITE + " --ping"); ok {
 		USE_CMD_WRITE = true
 	}
-}
-
-// New initializes the log file and set the environment variable PATH.
-func New() {
-	var err error
-	//logFilename := "/tmp/boot.log"
-	logFilename := "/var/log/boot_.log"
-
-	if path := os.Getenv("PATH"); path == "" {
-		if err := os.Setenv("PATH", PATH); err != nil {
-			log.Print(err)
-		}
-	}
-
-	logf, err = os.OpenFile(logFilename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log_ = log.New(os.Stderr, "", log.Lshortfile)
-}
-
-// Close closes the log file.
-func Close() error {
-	return logf.Close()
 }
 
 // ReadPassword reads a password directly from terminal or through a third program.

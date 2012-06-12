@@ -35,16 +35,16 @@ var testsOutput = []struct {
 	// values in ok
 	{"true", "", true},
 	{"false", "", false},
-	{`grep foo shout.go`, "", false},               // no found
-	{`grep package cmd.go`, "package shout", true}, // found
+	{`grep foo shout.go`, "", false},                 // no found
+	{`grep package cmd.go`, "package shout\n", true}, // found
 
 	// pipes
-	{"ls cmd*.go | wc -l", "2", true},
+	{"ls cmd*.go | wc -l", "2\n", true},
 
 	// quotes
-	{`sh -c 'echo 123'`, "123", true},
-	{`sh -c "echo 123"`, "123", true},
-	{`find -name 'cmd*.go'`, "./cmd_test.go\n./cmd.go", true},
+	{`sh -c 'echo 123'`, "123\n", true},
+	{`sh -c "echo 123"`, "123\n", true},
+	{`find -name 'cmd*.go'`, "./cmd_test.go\n./cmd.go\n", true},
 }
 
 var testsError = []struct {
@@ -71,7 +71,7 @@ func TestRun(t *testing.T) {
 			t.Errorf("`%s` => ok got %t, want %t\n", v.cmd, ok, v.ok)
 		}
 
-		if out == "" {
+		if string(out) == "" {
 			t.Errorf("`%s` => output is empty", v.cmd)
 		}
 	}
@@ -79,7 +79,7 @@ func TestRun(t *testing.T) {
 	for _, v := range testsOutput {
 		out, ok, _ := Run(v.cmd)
 
-		if out != v.out {
+		if string(out) != v.out {
 			t.Errorf("`%s` => output got %q, want %q\n", v.cmd, out, v.out)
 		}
 		if ok != v.ok {
