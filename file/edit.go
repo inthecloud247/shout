@@ -332,10 +332,10 @@ func (e *edit) rewrite(b []byte) error {
 
 // * * *
 
-// Append writes len(b) bytes at the end of the file filename. It returns an
+// Append writes len(b) bytes at the end of the named file. It returns an
 // error, if any. The file is backed up.
-func Append(b []byte, filename string) error {
-	e, err := NewEdit(filename)
+func Append(name string, b []byte) error {
+	e, err := NewEdit(name)
 	if err != nil {
 		return err
 	}
@@ -346,20 +346,20 @@ func Append(b []byte, filename string) error {
 
 // AppendString is like Append, but writes the contents of string s rather than
 // an array of bytes.
-func AppendString(s, filename string) error {
-	return Append([]byte(s), filename)
+func AppendString(s, name string) error {
+	return Append(name, []byte(s))
 }
 
 // Comment inserts the comment character in lines that mach the regular expression
-// in reLine, in the file filename.
-func Comment(reLine, filename string) error {
-	return CommentM([]string{reLine}, filename)
+// in reLine, in the named file.
+func Comment(name, reLine string) error {
+	return CommentM(name, []string{reLine})
 }
 
 // CommentM inserts the comment character in lines that mach any regular expression
-// in reLine, in the file filename.
-func CommentM(reLine []string, filename string) error {
-	e, err := NewEdit(filename)
+// in reLine, in the named file.
+func CommentM(name string, reLine []string) error {
+	e, err := NewEdit(name)
 	if err != nil {
 		return err
 	}
@@ -369,15 +369,15 @@ func CommentM(reLine []string, filename string) error {
 }
 
 // CommentOut removes the comment character of lines that mach the regular expression
-// in reLine, in the file filename.
-func CommentOut(reLine, filename string) error {
-	return CommentOutM([]string{reLine}, filename)
+// in reLine, in the named file.
+func CommentOut(name, reLine string) error {
+	return CommentOutM(name, []string{reLine})
 }
 
 // CommentOutM removes the comment character of lines that mach any regular expression
-// in reLine, in the file filename.
-func CommentOutM(reLine []string, filename string) error {
-	e, err := NewEdit(filename)
+// in reLine, in the named file.
+func CommentOutM(name string, reLine []string) error {
+	e, err := NewEdit(name)
 	if err != nil {
 		return err
 	}
@@ -386,10 +386,10 @@ func CommentOutM(reLine []string, filename string) error {
 	return e.CommentOut(reLine)
 }
 
-/*// Insert writes len(b) bytes at the start of the file filename. It returns an
+/*// Insert writes len(b) bytes at the start of the named file. It returns an
 // error, if any. The file is backed up.
-func Insert(b []byte, filename string) error {
-	e, err := NewEdit(filename)
+func Insert(name string, b []byte) error {
+	e, err := NewEdit(name)
 	if err != nil {
 		return err
 	}
@@ -400,13 +400,13 @@ func Insert(b []byte, filename string) error {
 
 // InsertString is like Insert, but writes the contents of string s rather than
 // an array of bytes.
-func InsertString(s, filename string) error {
-	return Insert([]byte(s), filename)
+func InsertString(s, name string) error {
+	return Insert(name, []byte(s))
 }*/
 
-// Replace replaces all regular expressions mathed in r for the file filename.
-func Replace(r []Replacer, filename string) error {
-	e, err := NewEdit(filename)
+// Replace replaces all regular expressions mathed in r for the named file.
+func Replace(name string, r []Replacer) error {
+	e, err := NewEdit(name)
 	if err != nil {
 		return err
 	}
@@ -415,10 +415,10 @@ func Replace(r []Replacer, filename string) error {
 	return e.genReplace(r, -1)
 }
 
-// ReplaceN replaces a number of regular expressions mathed in r for the file
-// filename.
-func ReplaceN(r []Replacer, n int, filename string) error {
-	e, err := NewEdit(filename)
+// ReplaceN replaces a number of regular expressions mathed in r for the named
+// file.
+func ReplaceN(name string, r []Replacer, n int) error {
+	e, err := NewEdit(name)
 	if err != nil {
 		return err
 	}
@@ -427,10 +427,10 @@ func ReplaceN(r []Replacer, n int, filename string) error {
 	return e.genReplace(r, n)
 }
 
-// ReplaceAtLine replaces all regular expressions mathed in r for the file
-// filename, if the line is matched at the first.
-func ReplaceAtLine(r []ReplacerAtLine, filename string) error {
-	e, err := NewEdit(filename)
+// ReplaceAtLine replaces all regular expressions mathed in r for the named
+// file, if the line is matched at the first.
+func ReplaceAtLine(name string, r []ReplacerAtLine) error {
+	e, err := NewEdit(name)
 	if err != nil {
 		return err
 	}
@@ -440,9 +440,9 @@ func ReplaceAtLine(r []ReplacerAtLine, filename string) error {
 }
 
 // ReplaceAtLineN replaces a number of regular expressions mathed in r for the
-// file filename, if the line is matched at the first.
-func ReplaceAtLineN(r []ReplacerAtLine, n int, filename string) error {
-	e, err := NewEdit(filename)
+// named file, if the line is matched at the first.
+func ReplaceAtLineN(name string, r []ReplacerAtLine, n int) error {
+	e, err := NewEdit(name)
 	if err != nil {
 		return err
 	}

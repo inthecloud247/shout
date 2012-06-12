@@ -22,7 +22,7 @@ import (
 func TestFind(t *testing.T) {
 	defer os.Remove(TEMP_FILE)
 
-	ok, err := ContainString("night", TEMP_FILE)
+	ok, err := ContainString(TEMP_FILE, "night")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func TestFind(t *testing.T) {
 		t.Errorf("ContainString got %t, want %t", ok, !ok)
 	}
 
-	ok, err = Contain([]byte("night"), TEMP_FILE)
+	ok, err = Contain(TEMP_FILE, []byte("night"))
 	if err != nil {
 		t.Fatal(err)
 	}

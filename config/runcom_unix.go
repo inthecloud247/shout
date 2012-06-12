@@ -14,7 +14,7 @@
 
 // +build !windows
 
-// Package config implements reader of runcom configuration files, with pairs
+// Package config implements reader of runcom configuration files; with pairs
 // key=value.
 //
 package config
@@ -26,37 +26,31 @@ import (
 	"os"
 )
 
-const (
-	b_COMMENT  = '#'
-	b_NEW_LINE = '\n'
-)
+var bEq = []byte{'='}
 
-var bs_EQ = []byte{'='}
-
-// Loads returns the settings of a runcom configuration file into a map.
-func Load(filename string) (map[string]string, error) {
-	file, err := os.Open(filename)
+// Loads returns the settings of the configuration file named into a map.
+func Load(name string) (map[string]string, error) {
+	file, err := os.Open(name)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
 
 	buf := bufio.NewReader(file)
 	cfg := make(map[string]string)
 
 	for {
-		line, err := buf.ReadBytes(b_NEW_LINE)
+		line, err := buf.ReadBytes('\n')
 		if err == io.EOF {
 			break
 		}
 
 		// Skip comments and blank lines.
-		if line[0] == b_COMMENT || line[0] == b_NEW_LINE {
+		if line[0] == '#' || line[0] == '\n' {
 			continue
 		}
 
-		fields := bytes.SplitN(line, bs_EQ, 2)
+		fields := bytes.SplitN(line, bEq, 2)
 		cfg[string(fields[0])] = string(bytes.Trim(fields[1], `"`)) // remove quotes
 	}
-	return cfg, nil
+	return cfg, file.Close()
 }

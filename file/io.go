@@ -21,18 +21,18 @@ import (
 	"path/filepath"
 )
 
-const _BACKUP_SUFFIX = "+[1-9]~" // suffix pattern added to backup filename
+const _BACKUP_SUFFIX = "+[1-9]~" // suffix pattern added to backup's file name
 
-// Backup creates the backup of a file.
+// Backup creates a backup of the named file.
 //
 // The schema used for the new name is: {name}\+[1-9]~
 //   name: The original file name.
 //   + : Character used to separate the file name from rest.
 //   number: A number from 1 to 9, using rotation.
 //   ~ : To indicate that it is a backup, just like it is used in Unix systems.
-func Backup(source string) error {
+func Backup(name string) error {
 	// Check if it is empty
-	info, err := os.Stat(source)
+	info, err := os.Stat(name)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -43,7 +43,7 @@ func Backup(source string) error {
 		return nil
 	}
 
-	files, err := filepath.Glob(source + _BACKUP_SUFFIX)
+	files, err := filepath.Glob(name + _BACKUP_SUFFIX)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func Backup(source string) error {
 		numBackup = '1'
 	}
 
-	_, err = Copy(source, fmt.Sprintf("%s+%s~", source, string(numBackup)))
+	_, err = Copy(name, fmt.Sprintf("%s+%s~", name, string(numBackup)))
 	return err
 }
 
@@ -96,8 +96,8 @@ func Copy(source, dest string) (int64, error) {
 }
 
 // Create creates a new file with b bytes.
-func Create(b []byte, filename string) error {
-	file, err := os.Create(filename)
+func Create(name string, b []byte) error {
+	file, err := os.Create(name)
 	if err != nil {
 		return err
 	}
@@ -109,18 +109,18 @@ func Create(b []byte, filename string) error {
 
 // CreateString is like Create, but writes the contents of string s rather than
 // an array of bytes.
-func CreateString(s, filename string) error {
-	return Create([]byte(s), filename)
+func CreateString(name, s string) error {
+	return Create(name, []byte(s))
 }
 
-// Overwrite truncates the file filename to zero and writes len(b) bytes. It
+// Overwrite truncates the named file to zero and writes len(b) bytes. It
 // returns an error, if any.
-func Overwrite(b []byte, filename string) error {
-	if err := Backup(filename); err != nil {
+func Overwrite(name string, b []byte) error {
+	if err := Backup(name); err != nil {
 		return err
 	}
 
-	f, err := os.Create(filename)
+	f, err := os.Create(name)
 	if err != nil {
 		return err
 	}
@@ -132,6 +132,6 @@ func Overwrite(b []byte, filename string) error {
 
 // OverwriteString is like Overwrite, but writes the contents of string s rather
 // than an array of bytes.
-func OverwriteString(s, filename string) error {
-	return Overwrite([]byte(s), filename)
+func OverwriteString(name, s string) error {
+	return Overwrite(name, []byte(s))
 }
