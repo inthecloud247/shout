@@ -16,6 +16,31 @@ package file
 
 import "os"
 
+// flags got in: `man 2 stat`
+const (
+	modeROwner = 00400 // owner has read permission
+	modeWOwner = 00200 // owner has write permission
+	modeXOwner = 00100 // owner has execute permission
+
+	modeRGroup = 00040 // group has read permission
+	modeWGroup = 00020 // group has write permission
+	modeXGroup = 00010 // group has execute permission
+
+	modeROthers = 00004 // others have read permission
+	modeWOthers = 00002 // others have write permission
+	modeXOthers = 00001 // others have execute permission
+)
+
+type perm uint8
+
+// permissions
+const (
+	_ perm = iota
+	R // read
+	W // write
+	X // execute
+)
+
 // info represents a wrapper about os.FileInfo to append some functions.
 type info struct{ fi os.FileInfo }
 
@@ -38,25 +63,73 @@ func (i *info) IsFile() bool {
 	return i.fi.Mode()&os.ModeType == 0
 }
 
-// IsModer reports whether it has read permission for the user.
-func (i *info) IsModer() bool {
-	return i.fi.Mode()&0400 != 0
+// OwnerHas reports whether the owner has all given permissions.
+func (i *info) OwnerHas(p ...perm) bool {
+	mode := i.fi.Mode()
+
+	for _, v := range p {
+		switch v {
+		case R:
+			if mode&modeROwner == 0 {
+				return false
+			}
+		case W:
+			if mode&modeWOwner == 0 {
+				return false
+			}
+		case X:
+			if mode&modeXOwner == 0 {
+				return false
+			}
+		}
+	}
+	return true
 }
 
-// IsModew reports whether it has write permission for the user.
-func (i *info) IsModew() bool {
-	return i.fi.Mode()&0200 != 0
+// GroupHas reports whether the group has all given permissions.
+func (i *info) GroupHas(p ...perm) bool {
+	mode := i.fi.Mode()
+
+	for _, v := range p {
+		switch v {
+		case R:
+			if mode&modeRGroup == 0 {
+				return false
+			}
+		case W:
+			if mode&modeWGroup == 0 {
+				return false
+			}
+		case X:
+			if mode&modeXGroup == 0 {
+				return false
+			}
+		}
+	}
+	return true
 }
 
-// IsModex reports whether it has execution permission for the user.
-func (i *info) IsModex() bool {
-	return i.fi.Mode()&0100 != 0
-}
+// OthersHave reports whether the others have all given permissions.
+func (i *info) OthersHave(p ...perm) bool {
+	mode := i.fi.Mode()
 
-// IsMode reports whether it has the given permission.
-// TODO: Can not be checked against 7.
-func (i *info) IsMode(perm os.FileMode) bool {
-	return i.fi.Mode()&perm != 0
+	for _, v := range p {
+		switch v {
+		case R:
+			if mode&modeROthers == 0 {
+				return false
+			}
+		case W:
+			if mode&modeWOthers == 0 {
+				return false
+			}
+		case X:
+			if mode&modeXOthers == 0 {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // * * *
@@ -79,38 +152,29 @@ func IsFile(name string) (bool, error) {
 	return i.IsFile(), nil
 }
 
-// IsModer reports whether the named file has read permission for the user.
-func IsModer(name string) (bool, error) {
+// OwnerHas reports whether the named file has all given permissions for the owner.
+func OwnerHas(name string, p ...perm) (bool, error) {
 	i, err := NewInfo(name)
 	if err != nil {
 		return false, err
 	}
-	return i.IsModer(), nil
+	return i.OwnerHas(p...), nil
 }
 
-// IsModew reports whether the named file has write permission for the user.
-func IsModew(name string) (bool, error) {
+// GroupHas reports whether the named file has all given permissions for the group.
+func GroupHas(name string, p ...perm) (bool, error) {
 	i, err := NewInfo(name)
 	if err != nil {
 		return false, err
 	}
-	return i.IsModew(), nil
+	return i.GroupHas(p...), nil
 }
 
-// IsModex reports whether the named file has execution permission for the user.
-func IsModex(name string) (bool, error) {
+// OthersHave reports whether the named file have all given permissions for the others.
+func OthersHave(name string, p ...perm) (bool, error) {
 	i, err := NewInfo(name)
 	if err != nil {
 		return false, err
 	}
-	return i.IsModex(), nil
-}
-
-// IsMode reports whether the named file has the permission perm.
-func IsMode(name string, perm os.FileMode) (bool, error) {
-	i, err := NewInfo(name)
-	if err != nil {
-		return false, err
-	}
-	return i.IsMode(perm), nil
+	return i.OthersHave(p...), nil
 }

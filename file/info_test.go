@@ -31,16 +31,10 @@ func TestInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !fi.IsModer() {
-		t.Error("IsModer got false")
+	if !fi.OwnerHas(R,W) {
+		t.Error("OwnerHas(R,W) got false")
 	}
-	if !fi.IsModew() {
-		t.Error("IsModew got false")
-	}
-	if fi.IsModex() {
-		t.Error("IsModex got true")
-	}
-	if !fi.IsMode(0600) { // rw
-		t.Error("IsMode got false")
+	if fi.OwnerHas(X) {
+		t.Error("OwnerHas(X) got true")
 	}
 }
