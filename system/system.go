@@ -8,9 +8,14 @@
 // operating system.
 package system
 
-type pkg interface {
+type Packager interface {
+	// Install returns the command to install a program.
 	Install(s string) string
+
+	// Remove returns the command to remove a program.
 	Remove(s string) string
+
+	// Purge returns the command to purge a program.
 	Purge(s string) string
 }
 
@@ -22,32 +27,28 @@ const (
 	Debian system = iota + 1
 )
 
-// * * *
-
-type debian system
-
-// Install returns the command to install a program.
-func (d debian) Install(s string) string {
-	return "apt-get install -y " + s
-}
-
-// Remove returns the command to remove a program.
-func (d debian) Remove(s string) string {
-	return "apt-get remove -y " + s
-}
-
-// Purge returns the command to purge a program.
-func (d debian) Purge(s string) string {
-	return "apt-get purge -y " + s
-}
-
-// * * *
-
 // NewSystem returns the interface to handle the given system.
-func NewSystem(s system) pkg {
+func NewSystem(s system) Packager {
 	switch s {
 	case Debian:
 		return new(debian)
 	}
 	panic("unreachable")
+}
+
+//
+// == Systems
+
+type debian system
+
+func (d debian) Install(s string) string {
+	return "apt-get install -y " + s
+}
+
+func (d debian) Remove(s string) string {
+	return "apt-get remove -y " + s
+}
+
+func (d debian) Purge(s string) string {
+	return "apt-get purge -y " + s
 }
