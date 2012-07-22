@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package system handles the commands to install and remove programs into an
+// operating system.
 package system
 
 type pkg interface {
@@ -17,8 +19,7 @@ type system int
 
 // Operating system or Linux flavor.
 const (
-	_ system = iota
-	Debian
+	Debian system = iota + 1
 )
 
 // * * *
