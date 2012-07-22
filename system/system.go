@@ -111,6 +111,11 @@ func (yum) Remove(name string) (err error) {
 	return
 }
 
+/*func (yum) Purge(name string) (err error) {
+	_, _, err = shout.Run("yum remove " + name)
+	return
+}*/
+
 func (yum) Clean() error {
 	_, _, err := shout.Run("yum clean packages")
 	return err
