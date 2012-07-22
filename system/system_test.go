@@ -7,20 +7,19 @@
 package system
 
 import (
-	"strings"
 	"testing"
 )
 
 func TestSystem(t *testing.T) {
 	sys := NewSystem(Debian)
-	cmd := "foo"
+	cmd := "postgresql"
 
-	out := sys.Install(cmd)
-	if !strings.HasSuffix(out, cmd) {
-		t.Error("Install did not get a string")
+	err := sys.Install(cmd)
+	if err != nil {
+		t.Errorf("\n%s", err)
 	}
 
-	if out = sys.Purge(cmd); !strings.HasSuffix(out, cmd) {
-		t.Error("Purge did not get a string")
+	if err = sys.Purge(cmd, true); err != nil {
+		t.Errorf("\n%s", err)
 	}
 }
