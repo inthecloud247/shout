@@ -78,7 +78,8 @@ var execPackagers = map[string]Packager{
 	"zypper":  new(zypp),
 }
 
-// Detect tries to get the package manager used in the system.
+// Detect tries to get the package manager used in the system looking for
+// executables in directory "/usr/bin".
 func Detect() (p Packager, found bool) {
 	for k, v := range execPackagers {
 		_, err := exec.LookPath("/usr/bin/" + k)
