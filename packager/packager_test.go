@@ -4,14 +4,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package system
+package packager
 
-import (
-	"testing"
-)
+import "testing"
 
-func TestSystem(t *testing.T) {
-	sys := NewSystem(Debian)
+func TestPackager(t *testing.T) {
+	sys := New(DEB)
 	cmd := "postgresql"
 
 	err := sys.Install(cmd)
