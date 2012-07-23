@@ -12,8 +12,9 @@
 // If you are going to use a package manager different to DEB, then you should
 // check the options since I cann't test all.
 //
+//
 // TODO
-// Add managers of BSD systems.
+// Add managers of BSD systems.  
 // Use flag to do not show questions.
 package packager
 
