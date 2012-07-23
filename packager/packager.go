@@ -14,7 +14,9 @@
 //
 //
 // TODO
-// Add managers of BSD systems.  
+//
+// Add managers of BSD systems.
+//
 // Use flag to do not show questions.
 package packager
 
