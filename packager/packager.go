@@ -44,8 +44,7 @@ type Packager interface {
 type PackageType int
 
 const (
-	_ PackageType = iota
-	DEB
+	DEB PackageType = iota + 1
 	RPM
 	Pacman
 	Ebuild
