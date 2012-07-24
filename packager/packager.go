@@ -103,25 +103,30 @@ func New(p PackageType) Packager {
 	panic("unreachable")
 }
 
+type packagerInfo struct {
+	pkg Packager
+	typ PackageType
+}
+
 // execPackagers is a list of executables of package managers.
-var execPackagers = map[string]Packager{
-	"apt-get": new(deb),
-	"yum":     new(rpm),
-	"pacman":  new(pacman),
-	"emerge":  new(ebuild),
-	"zypper":  new(zypp),
+var execPackagers = map[string]packagerInfo{
+	"apt-get": packagerInfo{new(deb), Deb},
+	"yum":     packagerInfo{new(rpm), RPM},
+	"pacman":  packagerInfo{new(pacman), Pacman},
+	"emerge":  packagerInfo{new(ebuild), Ebuild},
+	"zypper":  packagerInfo{new(zypp), ZYpp},
 }
 
 // Detect tries to get the package manager used in the system, looking for
 // executables in directory "/usr/bin".
-func Detect() (Packager, error) {
+func Detect() (Packager, PackageType, error) {
 	for k, v := range execPackagers {
 		_, err := exec.LookPath("/usr/bin/" + k)
 		if err == nil {
-			return v, nil
+			return v.pkg, v.typ, nil
 		}
 	}
-	return nil, errors.New("package manager not found in directory /usr/bin")
+	return nil, 0, errors.New("package manager not found in directory /usr/bin")
 }
 
 // runc executes a command logging its output if there is not any error.
@@ -183,7 +188,7 @@ func (deb) Upgrade() error {
 	if err := run("/usr/bin/apt-get", "update"); err != nil {
 		return err
 	}
-	return run ("/usr/bin/apt-get", "upgrade")
+	return run("/usr/bin/apt-get", "upgrade")
 }
 
 // http://fedoraproject.org/wiki/FAQ#How_do_I_install_new_software_on_Fedora.3F_Is_there_anything_like_APT.3F
