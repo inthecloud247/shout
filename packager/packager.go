@@ -104,29 +104,29 @@ func New(p PackageType) Packager {
 }
 
 type packagerInfo struct {
-	pkg Packager
 	typ PackageType
+	pkg Packager
 }
 
 // execPackagers is a list of executables of package managers.
 var execPackagers = map[string]packagerInfo{
-	"apt-get": packagerInfo{new(deb), Deb},
-	"yum":     packagerInfo{new(rpm), RPM},
-	"pacman":  packagerInfo{new(pacman), Pacman},
-	"emerge":  packagerInfo{new(ebuild), Ebuild},
-	"zypper":  packagerInfo{new(zypp), ZYpp},
+	"apt-get": packagerInfo{Deb, new(deb)},
+	"yum":     packagerInfo{RPM, new(rpm)},
+	"pacman":  packagerInfo{Pacman, new(pacman)},
+	"emerge":  packagerInfo{Ebuild, new(ebuild)},
+	"zypper":  packagerInfo{ZYpp, new(zypp)},
 }
 
 // Detect tries to get the package manager used in the system, looking for
 // executables in directory "/usr/bin".
-func Detect() (Packager, PackageType, error) {
+func Detect() (PackageType, Packager, error) {
 	for k, v := range execPackagers {
 		_, err := exec.LookPath("/usr/bin/" + k)
 		if err == nil {
-			return v.pkg, v.typ, nil
+			return v.typ, v.pkg, nil
 		}
 	}
-	return nil, 0, errors.New("package manager not found in directory /usr/bin")
+	return 0, nil, errors.New("package manager not found in directory /usr/bin")
 }
 
 // runc executes a command logging its output if there is not any error.
