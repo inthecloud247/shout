@@ -9,6 +9,10 @@ package packager
 import "testing"
 
 func TestPackager(t *testing.T) {
+	defer CloseLogfile()
+
+	_log.Println("testing...")
+
 	/*sys := New(Deb)
 	cmd := "postgresql"
 

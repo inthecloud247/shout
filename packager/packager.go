@@ -6,12 +6,10 @@
 
 // Package packager handles basic operations in package management systems.
 //
-//
 // Important
 //
 // If you are going to use a package manager different to Deb, then you should
 // check the options since I cann't test all.
-//
 //
 // TODO
 //
@@ -22,10 +20,43 @@ package packager
 
 import (
 	"errors"
+	"log"
+	"os"
 	"os/exec"
-
-	"github.com/kless/shout"
 )
+
+var (
+	_log    *log.Logger
+	logFile *os.File
+)
+
+// TODO: see /var/log/apt/history.log to have a similar log schema.
+func init() {
+	log.SetFlags(0)
+	log.SetPrefix("ERROR: ")
+
+	if os.Getuid() != 0 {
+		log.Fatal("you have to be root")
+	}
+
+	f, err := os.OpenFile("/var/log/shout/packager.log", os.O_RDWR, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = f.Seek(0, os.SEEK_END)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	logFile = f
+	_log = log.New(logFile, "", log.LstdFlags)
+}
+
+// CloseLogfile closes the log file.
+func CloseLogfile() error {
+	return logFile.Close()
+}
 
 type Packager interface {
 	// Install installs a program.
@@ -93,6 +124,16 @@ func Detect() (Packager, error) {
 	return nil, errors.New("package manager not found in directory /usr/bin")
 }
 
+// runc executes a command logging its output if there is not any error.
+func run(name string, arg ...string) error {
+	out, err := exec.Command(name, arg...).CombinedOutput()
+	if err != nil {
+		return err
+	}
+	_log.Print(out)
+	return nil
+}
+
 type packageSystem struct {
 	isFirstInstall bool
 }
@@ -101,42 +142,48 @@ type packageSystem struct {
 
 type deb packageSystem
 
-func (p deb) Install(name string) (err error) {
+func (p deb) Install(name string) error {
 	if p.isFirstInstall {
-		_, _, err = shout.Run("/usr/bin/apt-get update")
+		if err := run("/usr/bin/apt-get", "update"); err != nil {
+			return err
+		}
 		p.isFirstInstall = false
 	}
-	_, _, err = shout.Run("/usr/bin/apt-get install -y " + name)
-	return
+
+	return run("/usr/bin/apt-get", "install", "-y", name)
 }
 
-func (deb) Remove(name string, isMetapackage bool) (err error) {
-	_, _, err = shout.Run("/usr/bin/apt-get remove -y " + name)
-
-	if isMetapackage && err == nil {
-		_, _, err = shout.Run("/usr/bin/apt-get autoremove -y")
+func (deb) Remove(name string, isMetapackage bool) error {
+	if err := run("/usr/bin/apt-get", "remove", "-y", name); err != nil {
+		return err
 	}
-	return
-}
 
-func (deb) Purge(name string, isMetapackage bool) (err error) {
-	_, _, err = shout.Run("/usr/bin/apt-get purge -y " + name)
-
-	if isMetapackage && err == nil {
-		_, _, err = shout.Run("/usr/bin/apt-get autoremove --purge -y")
+	if isMetapackage {
+		return run("/usr/bin/apt-get", "autoremove", "-y")
 	}
-	return
+	return nil
 }
 
-func (deb) Clean() (err error) {
-	_, _, err = shout.Run("/usr/bin/apt-get clean")
-	return
+func (deb) Purge(name string, isMetapackage bool) error {
+	if err := run("/usr/bin/apt-get", "purge", "-y", name); err != nil {
+		return err
+	}
+
+	if isMetapackage {
+		return run("/usr/bin/apt-get", "autoremove", "--purge", "-y")
+	}
+	return nil
 }
 
-func (deb) Upgrade() (err error) {
-	_, _, err = shout.Run("/usr/bin/apt-get update")
-	_, _, err = shout.Run("/usr/bin/apt-get upgrade")
-	return
+func (deb) Clean() error {
+	return run("/usr/bin/apt-get", "clean")
+}
+
+func (deb) Upgrade() error {
+	if err := run("/usr/bin/apt-get", "update"); err != nil {
+		return err
+	}
+	return run ("/usr/bin/apt-get", "upgrade")
 }
 
 // http://fedoraproject.org/wiki/FAQ#How_do_I_install_new_software_on_Fedora.3F_Is_there_anything_like_APT.3F
@@ -146,32 +193,31 @@ func (deb) Upgrade() (err error) {
 
 type rpm packageSystem
 
-func (p rpm) Install(name string) (err error) {
+func (p rpm) Install(name string) error {
 	if p.isFirstInstall {
-		_, _, err = shout.Run("/usr/bin/yum update")
+		if err := run("/usr/bin/yum", "update"); err != nil {
+			return err
+		}
 		p.isFirstInstall = false
 	}
-	_, _, err = shout.Run("/usr/bin/yum install " + name)
-	return
+
+	return run("/usr/bin/yum", "install", name)
 }
 
-func (rpm) Remove(name string, isMetapackage bool) (err error) {
-	_, _, err = shout.Run("/usr/bin/yum remove " + name)
-	return
+func (rpm) Remove(name string, isMetapackage bool) error {
+	return run("/usr/bin/yum", "remove", name)
 }
 
-func (rpm) Purge(name string, isMetapackage bool) (err error) {
+func (rpm) Purge(name string, isMetapackage bool) error {
 	return nil
 }
 
-func (rpm) Clean() (err error) {
-	_, _, err = shout.Run("/usr/bin/yum clean packages")
-	return
+func (rpm) Clean() error {
+	return run("/usr/bin/yum", "clean", "packages")
 }
 
-func (rpm) Upgrade() (err error) {
-	_, _, err = shout.Run("/usr/bin/yum update")
-	return
+func (rpm) Upgrade() error {
+	return run("/usr/bin/yum", "update")
 }
 
 // https://wiki.archlinux.org/index.php/Pacman#Usage
@@ -183,41 +229,34 @@ func (rpm) Upgrade() (err error) {
 
 type pacman packageSystem
 
-func (p pacman) Install(name string) (err error) {
+func (p pacman) Install(name string) error {
 	if p.isFirstInstall {
-		_, _, err = shout.Run("/usr/bin/pacman -Syu --needed --noprogressbar " + name)
 		p.isFirstInstall = false
-	} else {
-		_, _, err = shout.Run("/usr/bin/pacman -S --needed  --noprogressbar " + name)
+		return run("/usr/bin/pacman", "-Syu", "--needed", "--noprogressbar", name)
 	}
-	return
+	return run("/usr/bin/pacman", "-S", "--needed", "--noprogressbar", name)
 }
 
-func (pacman) Remove(name string, isMetapackage bool) (err error) {
+func (pacman) Remove(name string, isMetapackage bool) error {
 	if isMetapackage {
-		_, _, err = shout.Run("/usr/bin/pacman -Rs " + name)
-	} else {
-		_, _, err = shout.Run("/usr/bin/pacman -R " + name)
+		return run("/usr/bin/pacman", "-Rs", name)
 	}
-	return
+	return run("/usr/bin/pacman", "-R", name)
 }
 
-func (pacman) Purge(name string, isMetapackage bool) (err error) {
+func (pacman) Purge(name string, isMetapackage bool) error {
 	if isMetapackage {
-		_, _, err = shout.Run("/usr/bin/pacman -Rsn " + name)
-	} else {
-		_, _, err = shout.Run("/usr/bin/pacman -Rn " + name)
+		return run("/usr/bin/pacman", "-Rsn", name)
 	}
-	return
+	return run("/usr/bin/pacman", "-Rn", name)
 }
 
-func (pacman) Clean() (err error) {
+func (pacman) Clean() error {
 	return nil
 }
 
-func (pacman) Upgrade() (err error) {
-	_, _, err = shout.Run("/usr/bin/pacman -Syu")
-	return
+func (pacman) Upgrade() error {
+	return run("/usr/bin/pacman", "-Syu")
 }
 
 // http://www.gentoo.org/doc/en/handbook/handbook-x86.xml?part=2&chap=1
@@ -229,36 +268,40 @@ func (pacman) Upgrade() (err error) {
 
 type ebuild packageSystem
 
-func (p ebuild) Install(name string) (err error) {
+func (p ebuild) Install(name string) error {
 	if p.isFirstInstall {
-		_, _, err = shout.Run("/usr/bin/emerge --sync")
+		if err := run("/usr/bin/emerge", "--sync"); err != nil {
+			return err
+		}
 		p.isFirstInstall = false
 	}
-	_, _, err = shout.Run("/usr/bin/emerge " + name)
-	return
+	return run("/usr/bin/emerge", name)
 }
 
-func (ebuild) Remove(name string, isMetapackage bool) (err error) {
-	_, _, err = shout.Run("/usr/bin/emerge --unmerge " + name)
-
-	if isMetapackage && err == nil {
-		_, _, err = shout.Run("/usr/bin/emerge --depclean")
+func (ebuild) Remove(name string, isMetapackage bool) error {
+	if err := run("/usr/bin/emerge", "--unmerge", name); err != nil {
+		return err
 	}
-	return
-}
 
-func (ebuild) Purge(name string, isMetapackage bool) (err error) {
+	if isMetapackage {
+		return run("/usr/bin/emerge", "--depclean")
+	}
 	return nil
 }
 
-func (ebuild) Clean() (err error) {
+func (ebuild) Purge(name string, isMetapackage bool) error {
 	return nil
 }
 
-func (ebuild) Upgrade() (err error) {
-	_, _, err = shout.Run("/usr/bin/emerge --sync")
-	_, _, err = shout.Run("/usr/bin/emerge --update --deep --with-bdeps=y --newuse world")
-	return
+func (ebuild) Clean() error {
+	return nil
+}
+
+func (ebuild) Upgrade() error {
+	if err := run("/usr/bin/emerge", "--sync"); err != nil {
+		return err
+	}
+	return run("/usr/bin/emerge", "--update", "--deep", "--with-bdeps=y", "--newuse world")
 }
 
 // http://en.opensuse.org/SDB:Zypper_usage
@@ -270,33 +313,33 @@ func (ebuild) Upgrade() (err error) {
 
 type zypp packageSystem
 
-func (p zypp) Install(name string) (err error) {
+func (p zypp) Install(name string) error {
 	if p.isFirstInstall {
-		_, _, err = shout.Run("/usr/bin/zypper refresh")
+		if err := run("/usr/bin/zypper", "refresh"); err != nil {
+			return err
+		}
 		p.isFirstInstall = false
 	}
-	_, _, err = shout.Run("/usr/bin/zypper install --auto-agree-with-licenses " + name)
-	return
+	return run("/usr/bin/zypper", "install", "--auto-agree-with-licenses", name)
 }
 
-func (zypp) Remove(name string, isMetapackage bool) (err error) {
-	_, _, err = shout.Run("/usr/bin/zypper remove " + name)
-	return
+func (zypp) Remove(name string, isMetapackage bool) error {
+	return run("/usr/bin/zypper", "remove", name)
 }
 
-func (zypp) Purge(name string, isMetapackage bool) (err error) {
+func (zypp) Purge(name string, isMetapackage bool) error {
 	return nil
 }
 
-func (zypp) Clean() (err error) {
-	_, _, err = shout.Run("/usr/bin/zypper clean")
-	return
+func (zypp) Clean() error {
+	return run("/usr/bin/zypper", "clean")
 }
 
-func (zypp) Upgrade() (err error) {
-	_, _, err = shout.Run("/usr/bin/zypper refresh")
-	_, _, err = shout.Run("/usr/bin/zypper up --auto-agree-with-licenses")
-	return
+func (zypp) Upgrade() error {
+	if err := run("/usr/bin/zypper", "refresh"); err != nil {
+		return err
+	}
+	return run("/usr/bin/zypper", "up", "--auto-agree-with-licenses")
 }
 
 /* TODO: maybe be needed ahead
