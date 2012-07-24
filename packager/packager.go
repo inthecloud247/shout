@@ -9,7 +9,7 @@
 //
 // Important
 //
-// If you are going to use a package manager different to DEB, then you should
+// If you are going to use a package manager different to Deb, then you should
 // check the options since I cann't test all.
 //
 //
@@ -21,6 +21,7 @@
 package packager
 
 import (
+	"errors"
 	"os/exec"
 
 	"github.com/kless/shout"
@@ -47,7 +48,7 @@ type Packager interface {
 type PackageType int
 
 const (
-	DEB PackageType = iota + 1
+	Deb PackageType = iota + 1
 	RPM
 	Pacman
 	Ebuild
@@ -57,7 +58,7 @@ const (
 // New returns the interface to handle the package manager.
 func New(p PackageType) Packager {
 	switch p {
-	case DEB:
+	case Deb:
 		return new(deb)
 	case RPM:
 		return new(rpm)
@@ -80,25 +81,23 @@ var execPackagers = map[string]Packager{
 	"zypper":  new(zypp),
 }
 
-// Detect tries to get the package manager used in the system looking for
+// Detect tries to get the package manager used in the system, looking for
 // executables in directory "/usr/bin".
-func Detect() (p Packager, found bool) {
+func Detect() (Packager, error) {
 	for k, v := range execPackagers {
 		_, err := exec.LookPath("/usr/bin/" + k)
 		if err == nil {
-			return v, true
+			return v, nil
 		}
 	}
-	return nil, false
+	return nil, errors.New("package manager not found in directory /usr/bin")
 }
 
 type packageSystem struct {
 	isFirstInstall bool
 }
 
-// == DEB
-
-// TODO: remove -s since it's to simulate (during testing)
+// == Deb
 
 type deb packageSystem
 
@@ -107,24 +106,24 @@ func (p deb) Install(name string) (err error) {
 		_, _, err = shout.Run("/usr/bin/apt-get update")
 		p.isFirstInstall = false
 	}
-	_, _, err = shout.Run("/usr/bin/apt-get install -y -s " + name)
+	_, _, err = shout.Run("/usr/bin/apt-get install -y " + name)
 	return
 }
 
 func (deb) Remove(name string, isMetapackage bool) (err error) {
-	_, _, err = shout.Run("/usr/bin/apt-get remove -y -s " + name)
+	_, _, err = shout.Run("/usr/bin/apt-get remove -y " + name)
 
 	if isMetapackage && err == nil {
-		_, _, err = shout.Run("/usr/bin/apt-get autoremove -y -s")
+		_, _, err = shout.Run("/usr/bin/apt-get autoremove -y")
 	}
 	return
 }
 
 func (deb) Purge(name string, isMetapackage bool) (err error) {
-	_, _, err = shout.Run("/usr/bin/apt-get purge -y -s " + name)
+	_, _, err = shout.Run("/usr/bin/apt-get purge -y " + name)
 
 	if isMetapackage && err == nil {
-		_, _, err = shout.Run("/usr/bin/apt-get autoremove --purge -y -s")
+		_, _, err = shout.Run("/usr/bin/apt-get autoremove --purge -y")
 	}
 	return
 }
