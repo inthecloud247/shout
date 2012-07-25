@@ -28,7 +28,10 @@ var (
 
 func Install() {
 	err := os.Mkdir(logDir, 0755)
-	if err != nil && !os.IsExist(err) {
+	if err != nil {
+		if os.IsExist(err) {
+			return
+		}
 		log.Fatal(err)
 	}
 
