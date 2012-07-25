@@ -60,13 +60,13 @@ func CloseLogfile() error {
 
 type Packager interface {
 	// Install installs a program.
-	Install(string) error
+	Install(...string) error
 
 	// Remove removes a program.
-	Remove(string, bool) error
+	Remove(bool, ...string) error
 
 	// Purge removes a program and its config files.
-	Purge(string, bool) error
+	Purge(bool, ...string) error
 
 	// Clean erases downloaded archive files.
 	Clean() error
@@ -130,8 +130,8 @@ func Detect() (PackageType, Packager, error) {
 }
 
 // runc executes a command logging its output if there is not any error.
-func run(name string, arg ...string) error {
-	out, err := exec.Command(name, arg...).CombinedOutput()
+func run(cmd string, arg ...string) error {
+	out, err := exec.Command(cmd, arg...).CombinedOutput()
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ type packageSystem struct {
 
 type deb packageSystem
 
-func (p deb) Install(name string) error {
+func (p deb) Install(name ...string) error {
 	if p.isFirstInstall {
 		if err := run("/usr/bin/apt-get", "update"); err != nil {
 			return err
@@ -155,11 +155,15 @@ func (p deb) Install(name string) error {
 		p.isFirstInstall = false
 	}
 
-	return run("/usr/bin/apt-get", "install", "-y", name)
+	arg := []string{"install", "-y"}
+	arg = append(arg, name...)
+	return run("/usr/bin/apt-get", arg...)
 }
 
-func (deb) Remove(name string, isMetapackage bool) error {
-	if err := run("/usr/bin/apt-get", "remove", "-y", name); err != nil {
+func (deb) Remove(isMetapackage bool, name ...string) error {
+	arg := []string{"remove", "-y"}
+	arg = append(arg, name...)
+	if err := run("/usr/bin/apt-get", arg...); err != nil {
 		return err
 	}
 
@@ -169,8 +173,10 @@ func (deb) Remove(name string, isMetapackage bool) error {
 	return nil
 }
 
-func (deb) Purge(name string, isMetapackage bool) error {
-	if err := run("/usr/bin/apt-get", "purge", "-y", name); err != nil {
+func (deb) Purge(isMetapackage bool, name ...string) error {
+	arg := []string{"purge", "-y"}
+	arg = append(arg, name...)
+	if err := run("/usr/bin/apt-get", arg...); err != nil {
 		return err
 	}
 
@@ -198,7 +204,7 @@ func (deb) Upgrade() error {
 
 type rpm packageSystem
 
-func (p rpm) Install(name string) error {
+func (p rpm) Install(name ...string) error {
 	if p.isFirstInstall {
 		if err := run("/usr/bin/yum", "update"); err != nil {
 			return err
@@ -206,14 +212,18 @@ func (p rpm) Install(name string) error {
 		p.isFirstInstall = false
 	}
 
-	return run("/usr/bin/yum", "install", name)
+	arg := []string{"install"}
+	arg = append(arg, name...)
+	return run("/usr/bin/yum", arg...)
 }
 
-func (rpm) Remove(name string, isMetapackage bool) error {
-	return run("/usr/bin/yum", "remove", name)
+func (rpm) Remove(isMetapackage bool, name ...string) error {
+	arg := []string{"remove"}
+	arg = append(arg, name...)
+	return run("/usr/bin/yum", arg...)
 }
 
-func (rpm) Purge(name string, isMetapackage bool) error {
+func (rpm) Purge(isMetapackage bool, name ...string) error {
 	return nil
 }
 
@@ -234,26 +244,41 @@ func (rpm) Upgrade() error {
 
 type pacman packageSystem
 
-func (p pacman) Install(name string) error {
+func (p pacman) Install(name ...string) error {
 	if p.isFirstInstall {
 		p.isFirstInstall = false
-		return run("/usr/bin/pacman", "-Syu", "--needed", "--noprogressbar", name)
+		arg := []string{"-Syu", "--needed", "--noprogressbar"}
+		arg = append(arg, name...)
+		return run("/usr/bin/pacman", arg...)
 	}
-	return run("/usr/bin/pacman", "-S", "--needed", "--noprogressbar", name)
+
+	arg := []string{"-S", "--needed", "--noprogressbar"}
+	arg = append(arg, name...)
+	return run("/usr/bin/pacman", arg...)
 }
 
-func (pacman) Remove(name string, isMetapackage bool) error {
+func (pacman) Remove(isMetapackage bool, name ...string) error {
 	if isMetapackage {
-		return run("/usr/bin/pacman", "-Rs", name)
+		arg := []string{"-Rs"}
+		arg = append(arg, name...)
+		return run("/usr/bin/pacman", arg...)
 	}
-	return run("/usr/bin/pacman", "-R", name)
+
+	arg := []string{"-R"}
+	arg = append(arg, name...)
+	return run("/usr/bin/pacman", arg...)
 }
 
-func (pacman) Purge(name string, isMetapackage bool) error {
+func (pacman) Purge(isMetapackage bool, name ...string) error {
 	if isMetapackage {
-		return run("/usr/bin/pacman", "-Rsn", name)
+		arg := []string{"-Rsn"}
+		arg = append(arg, name...)
+		return run("/usr/bin/pacman", arg...)
 	}
-	return run("/usr/bin/pacman", "-Rn", name)
+
+	arg := []string{"-Rn"}
+	arg = append(arg, name...)
+	return run("/usr/bin/pacman", arg...)
 }
 
 func (pacman) Clean() error {
@@ -273,18 +298,20 @@ func (pacman) Upgrade() error {
 
 type ebuild packageSystem
 
-func (p ebuild) Install(name string) error {
+func (p ebuild) Install(name ...string) error {
 	if p.isFirstInstall {
 		if err := run("/usr/bin/emerge", "--sync"); err != nil {
 			return err
 		}
 		p.isFirstInstall = false
 	}
-	return run("/usr/bin/emerge", name)
+	return run("/usr/bin/emerge", name...)
 }
 
-func (ebuild) Remove(name string, isMetapackage bool) error {
-	if err := run("/usr/bin/emerge", "--unmerge", name); err != nil {
+func (ebuild) Remove(isMetapackage bool, name ...string) error {
+	arg := []string{"--unmerge"}
+	arg = append(arg, name...)
+	if err := run("/usr/bin/emerge", arg...); err != nil {
 		return err
 	}
 
@@ -294,7 +321,7 @@ func (ebuild) Remove(name string, isMetapackage bool) error {
 	return nil
 }
 
-func (ebuild) Purge(name string, isMetapackage bool) error {
+func (ebuild) Purge(isMetapackage bool, name ...string) error {
 	return nil
 }
 
@@ -318,21 +345,26 @@ func (ebuild) Upgrade() error {
 
 type zypp packageSystem
 
-func (p zypp) Install(name string) error {
+func (p zypp) Install(name ...string) error {
 	if p.isFirstInstall {
 		if err := run("/usr/bin/zypper", "refresh"); err != nil {
 			return err
 		}
 		p.isFirstInstall = false
 	}
-	return run("/usr/bin/zypper", "install", "--auto-agree-with-licenses", name)
+
+	arg := []string{"install", "--auto-agree-with-licenses"}
+	arg = append(arg, name...)
+	return run("/usr/bin/zypper", arg...)
 }
 
-func (zypp) Remove(name string, isMetapackage bool) error {
-	return run("/usr/bin/zypper", "remove", name)
+func (zypp) Remove(isMetapackage bool, name ...string) error {
+	arg := []string{"remove"}
+	arg = append(arg, name...)
+	return run("/usr/bin/zypper", arg...)
 }
 
-func (zypp) Purge(name string, isMetapackage bool) error {
+func (zypp) Purge(isMetapackage bool, name ...string) error {
 	return nil
 }
 

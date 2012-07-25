@@ -4,11 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Command install allows install or remove additional files.
+// Command Install manages files related to the system.
 //
-// To use during develpment:
+// During the development, it could be used the command:
 //
-// sudo env PATH=$PATH GOPATH=$GOPATH go run install.go <flag>
+// sudo env PATH=$PATH GOPATH=$GOPATH go run Install.go <flag...>
 package main
 
 import (
