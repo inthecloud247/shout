@@ -23,7 +23,7 @@ import (
 
 var (
 	logDir   = "/var/log/shout"
-	logFiles = []string{"shout", "packager"}
+	logFiles = []string{"shout"}
 )
 
 func Install() {

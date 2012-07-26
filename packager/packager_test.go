@@ -9,19 +9,15 @@ package packager
 import "testing"
 
 func TestPackager(t *testing.T) {
-	defer CloseLogfile()
-
-	_log.Println("testing...")
-
-	/*sys := New(Deb)
-	cmd := "postgresql"
+	sys := New(Deb)
+	cmd := "curl"
 
 	err := sys.Install(cmd)
 	if err != nil {
 		t.Errorf("\n%s", err)
 	}
 
-	if err = sys.Purge(cmd, true); err != nil {
+	if err = sys.Remove(false, cmd); err != nil {
 		t.Errorf("\n%s", err)
-	}*/
+	}
 }

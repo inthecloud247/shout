@@ -30,11 +30,11 @@ func init() {
 	log.SetFlags(0)
 	log.SetPrefix("ERROR: ")
 
-	_HOME = os.Getenv("HOME")
 	if BOOT {
 		_ENV = []string{"PATH=" + PATH} // from file boot
 	} else {
 		_ENV = os.Environ()
+		_HOME = os.Getenv("HOME")
 	}
 
 	/*if path := os.Getenv("PATH"); path == "" {

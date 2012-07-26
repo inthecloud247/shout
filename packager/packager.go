@@ -20,43 +20,8 @@ package packager
 
 import (
 	"errors"
-	"log"
-	"os"
 	"os/exec"
 )
-
-var (
-	_log    *log.Logger
-	logFile *os.File
-)
-
-// TODO: see /var/log/apt/history.log to have a similar log schema.
-func init() {
-	log.SetFlags(0)
-	log.SetPrefix("ERROR: ")
-
-	if os.Getuid() != 0 {
-		log.Fatal("you have to be root")
-	}
-
-	f, err := os.OpenFile("/var/log/shout/packager.log", os.O_RDWR, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = f.Seek(0, os.SEEK_END)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	logFile = f
-	_log = log.New(logFile, "", log.LstdFlags)
-}
-
-// CloseLogfile closes the log file.
-func CloseLogfile() error {
-	return logFile.Close()
-}
 
 type Packager interface {
 	// Install installs a program.
@@ -74,6 +39,8 @@ type Packager interface {
 	// Upgrade upgrades all the packages on the system.
 	Upgrade() error
 }
+
+// * * *
 
 // PackageType represents a package management system.
 type PackageType int
@@ -103,6 +70,8 @@ func New(p PackageType) Packager {
 	panic("unreachable")
 }
 
+// * * *
+
 type packagerInfo struct {
 	typ PackageType
 	pkg Packager
@@ -129,15 +98,20 @@ func Detect() (PackageType, Packager, error) {
 	return 0, nil, errors.New("package manager not found in directory /usr/bin")
 }
 
+// * * *
+
 // runc executes a command logging its output if there is not any error.
 func run(cmd string, arg ...string) error {
-	out, err := exec.Command(cmd, arg...).CombinedOutput()
+	_, err := exec.Command(cmd, arg...).CombinedOutput()
 	if err != nil {
 		return err
 	}
-	_log.Print(out)
+
+	// log.Print(string(out)) // DEBUG
 	return nil
 }
+
+// * * *
 
 type packageSystem struct {
 	isFirstInstall bool
