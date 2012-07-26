@@ -41,9 +41,8 @@ func (e runError) Error() string {
 	if e.debug != "" {
 		e.debug = "\n\tDEBUG: " + e.debug
 	}
-	return fmt.Sprintf("[Run] `%s`%s\n\t%s: %s", e.cmd, e.debug, e.errType, e.err)
+	return fmt.Sprintf("[Shout] `%s`%s\n\t%s: %s", e.cmd, e.debug, e.errType, e.err)
 }
-// ==
 
 // Run executes external commands with access to shell features such as filename
 // wildcards, shell pipes, environment variables, and expansion of the shortcut
@@ -271,6 +270,7 @@ func Run(command string) (output []byte, ok bool, err error) {
 		}
 	}
 
+	Log.Print(command)
 	return stdout.Bytes(), ok, nil
 }
 

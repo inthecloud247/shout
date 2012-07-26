@@ -7,10 +7,13 @@
 package shout
 
 import (
+	"io/ioutil"
 	"log"
-	//"log/syslog"
+	"log/syslog"
 	"os"
 )
+
+const _LOG_FILE = "/.shout.log" // in boot
 
 var (
 	_ENV  []string
@@ -18,41 +21,50 @@ var (
 	BOOT  bool   // does the script is being run during boot?
 	DEBUG bool
 
-	logf *os.File
-	log_ *log.Logger
+	logFile *os.File
+	Log     = log.New(ioutil.Discard, "", 0)
 )
 
+// Sets environment variables and a null logger.
 func init() {
-	_HOME = os.Getenv("HOME")
+	log.SetFlags(0)
+	log.SetPrefix("ERROR: ")
 
+	_HOME = os.Getenv("HOME")
 	if BOOT {
-		_ENV = []string{"PATH=" + PATH}
+		_ENV = []string{"PATH=" + PATH} // from file boot
 	} else {
 		_ENV = os.Environ()
 	}
-}
 
-// New initializes the log file and set the environment variable PATH.
-func New() {
-	var err error
-	//logFilename := "/tmp/boot.log"
-	logFilename := "/var/log/boot_.log"
-
-	if path := os.Getenv("PATH"); path == "" {
-		if err := os.Setenv("PATH", PATH); err != nil {
+	/*if path := os.Getenv("PATH"); path == "" {
+		if err = os.Setenv("PATH", PATH); err != nil {
 			log.Print(err)
 		}
-	}
-
-	logf, err = os.OpenFile(logFilename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log_ = log.New(os.Stderr, "", log.Lshortfile)
+	}*/
 }
 
-// Close closes the log file.
-func Close() error {
-	return logf.Close()
+// StartLogger initializes the log file.
+func StartLogger() {
+	var err error
+
+	if BOOT {
+		if logFile, err = os.OpenFile(_LOG_FILE, os.O_WRONLY|os.O_TRUNC, 0); err != nil {
+			log.Print(err)
+		} else {
+			Log = log.New(logFile, "", log.Lshortfile)
+		}
+	} else {
+		if Log, err = syslog.NewLogger(syslog.LOG_NOTICE, log.Lshortfile); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+// CloseLogger closes the log file.
+func CloseLogger() error {
+	if BOOT {
+		return logFile.Close()
+	}
+	return nil
 }
