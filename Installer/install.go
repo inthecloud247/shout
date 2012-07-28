@@ -1,14 +1,14 @@
-// Copyright 2012  The "Shout" Authors
+// Copyright 2012 Jonas mg
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Command Install manages files related to the system.
+// Installer manages files related to the system.
 //
 // During the development, it could be used the command:
 //
-// sudo env PATH=$PATH GOPATH=$GOPATH go run Install.go <flag...>
+// sudo env PATH=$PATH GOPATH=$GOPATH go run install.go <flag...>
 package main
 
 import (
