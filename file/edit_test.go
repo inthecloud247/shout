@@ -84,8 +84,8 @@ func TestEdit(t *testing.T) {
 	if err = e.Replace(repl); err != nil {
 		t.Error(err)
 	} else {
-		if out, _, _ := Runf("grep -c %s %s", repl[1].replace, TEMP_FILE); string(out) != resul {
-			t.Errorf("Replace (%s) => got %v, want %v", repl[1].replace, out, resul)
+		if out, _, _ := Runf("grep -c %s %s", repl[1].Replace, TEMP_FILE); string(out) != resul {
+			t.Errorf("Replace (%s) => got %v, want %v", repl[1].Replace, out, resul)
 		}
 	}
 
@@ -99,8 +99,8 @@ func TestEdit(t *testing.T) {
 		t.Error(err)
 	} else {
 		for i := 0; i <= 1; i++ {
-			if out, _, _ := Runf("grep -c %s %s", repl[i].replace, TEMP_FILE); string(out) != resul {
-				t.Errorf("Replace (%s) => got %v, want %v", repl[i].replace, out, resul)
+			if out, _, _ := Runf("grep -c %s %s", repl[i].Replace, TEMP_FILE); string(out) != resul {
+				t.Errorf("Replace (%s) => got %v, want %v", repl[i].Replace, out, resul)
 			}
 		}
 	}

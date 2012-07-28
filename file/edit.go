@@ -40,11 +40,11 @@ type edit struct {
 }
 
 type Replacer struct {
-	search, replace string
+	Search, Replace string
 }
 
 type ReplacerAtLine struct {
-	line, search, replace string
+	Line, Search, Replace string
 }
 
 // NewEdit opens a file to edit; it is created a backup.
@@ -211,13 +211,13 @@ func (e *edit) genReplace(r []Replacer, n int) error {
 	isNew := false
 
 	for _, v := range r {
-		reSearch, err := regexp.Compile(v.search)
+		reSearch, err := regexp.Compile(v.Search)
 		if err != nil {
 			return err
 		}
 
 		i := n
-		repl := []byte(v.replace)
+		repl := []byte(v.Replace)
 
 		content = reSearch.ReplaceAllFunc(content, func(s []byte) []byte {
 			if !isNew {
@@ -254,19 +254,19 @@ func (e *edit) genReplaceAtLine(r []ReplacerAtLine, n int) error {
 	allRepl := make([][]byte, len(r))
 
 	for i, v := range r {
-		if reLine, err := regexp.Compile(v.line); err != nil {
+		if reLine, err := regexp.Compile(v.Line); err != nil {
 			return err
 		} else {
 			allReLine[i] = reLine
 		}
 
-		if reSearch, err := regexp.Compile(v.search); err != nil {
+		if reSearch, err := regexp.Compile(v.Search); err != nil {
 			return err
 		} else {
 			allReSearch[i] = reSearch
 		}
 
-		allRepl[i] = []byte(v.replace)
+		allRepl[i] = []byte(v.Replace)
 	}
 
 	buf := new(bytes.Buffer)
