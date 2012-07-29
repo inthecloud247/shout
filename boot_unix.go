@@ -14,8 +14,8 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/kless/Go-Inline/inline"
-	"github.com/kless/Go-Term/term"
+	"github.com/kless/inline"
+	"github.com/kless/term"
 )
 
 const (
