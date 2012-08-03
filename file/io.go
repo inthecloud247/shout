@@ -9,6 +9,7 @@ package file
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -54,37 +55,57 @@ func Backup(name string) error {
 		numBackup = '1'
 	}
 
-	_, err = Copy(name, fmt.Sprintf("%s+%s~", name, string(numBackup)))
-	return err
+	return Copy(name, fmt.Sprintf("%s+%s~", name, string(numBackup)))
 }
 
 // Copy copies file in source to file in dest preserving the mode attributes.
-func Copy(source, dest string) (int64, error) {
+func Copy(source, dest string) error {
 	// Don't backup files of backup.
 	if dest[len(dest)-1] != '~' {
 		if err := Backup(dest); err != nil {
-			return 0, err
+			return err
 		}
 	}
 
 	srcFile, err := os.Open(source)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer srcFile.Close()
 
 	srcInfo, err := os.Stat(source)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	dstFile, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcInfo.Mode().Perm())
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer dstFile.Close()
 
-	return io.Copy(dstFile, srcFile)
+	_, err = io.Copy(dstFile, srcFile)
+	return err
+}
+
+// CopyTemp copies a source file into a temporary file.
+// Returns the temporary file name.
+func CopyTemp(source string) (string, error) {
+	src, err := os.Open(source)
+	if err != nil {
+		return "", err
+	}
+
+	dest, err := ioutil.TempFile("", "test-")
+	if err != nil {
+		return "", err
+	}
+
+	if _, err = io.Copy(dest, src); err != nil {
+		return "", err
+	}
+
+	return dest.Name(), nil
 }
 
 // Create creates a new file with b bytes.
