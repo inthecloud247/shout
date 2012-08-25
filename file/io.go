@@ -9,7 +9,6 @@ package file
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -86,26 +85,6 @@ func Copy(source, dest string) error {
 
 	_, err = io.Copy(dstFile, srcFile)
 	return err
-}
-
-// CopyTemp copies a source file into a temporary file.
-// Returns the temporary file name.
-func CopyTemp(source string) (string, error) {
-	src, err := os.Open(source)
-	if err != nil {
-		return "", err
-	}
-
-	dest, err := ioutil.TempFile("", "test-")
-	if err != nil {
-		return "", err
-	}
-
-	if _, err = io.Copy(dest, src); err != nil {
-		return "", err
-	}
-
-	return dest.Name(), nil
 }
 
 // Create creates a new file with b bytes.
