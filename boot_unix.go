@@ -14,8 +14,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/kless/console"
-	"github.com/kless/console/editline"
+	"github.com/kless/terminal"
 )
 
 const (
@@ -45,14 +44,13 @@ func ReadPassword(prompt string) (key []byte, err error) {
 	if USE_CMD_WRITE {
 		key, err = exec.Command(CMD_WRITE, "ask-for-password", "--prompt="+prompt).Output()
 	} else {
-		t, err := console.New(syscall.Stdin)
-		if err != nil {
-			panic(err)
-		}
-		defer t.Restore()
+		var n int
+		pass := make([]byte, 16)
 
-		t.SetEcho(true)
-		key, err = editline.ReadBytes(prompt)
+		n, err = terminal.ReadPassword(syscall.Stdin, pass)
+		if err == nil {
+			copy(key, pass[:n])
+		}
 	}
 
 	if err != nil {
